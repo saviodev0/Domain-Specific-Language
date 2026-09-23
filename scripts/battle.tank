@@ -1,0 +1,41 @@
+tank Tiger1 {
+    hp 100
+    armor 30
+    speed 40
+    radar 70
+    gun Cannon {
+        damage 50
+        range 500
+        ammo 5
+        cooldown 1
+    }
+}
+
+submarine Shark1 {
+    hp 80
+    armor 10
+    speed 25
+    radar 90
+    torpedo T1 {
+        damage 70
+        range 800
+        ammo 3
+        cooldown 2
+    }
+}
+
+team Blue {
+    Tiger1
+}
+
+team Red {
+    Shark1
+}
+
+battle War {
+    Blue vs Red
+}
+
+move Tiger1 20 20
+move Shark1 170 80
+dive Shark1 40
