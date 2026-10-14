@@ -3,7 +3,7 @@ from typing import Dict, List, Any
 from .renderer import GridRenderer
 
 class Unit:
-    def __init__(self, name: str, kind: str, properties: Dict[str, int], weapons: List[Dict]):
+    def __init__(self, name: str, kind: str, properties: Dict[str, int | float], weapons: List[Dict]):
         self.name = name
         self.kind = kind
         self.hp = properties.get("hp", 100)
@@ -12,8 +12,8 @@ class Unit:
         self.speed = properties.get("speed", 10)
         self.radar_range = properties.get("radar", 60)
         self.depth = properties.get("depth", 0) if kind == "submarine" else 0
-        self.x = 0
-        self.y = 0
+        self.x: int | float = 0
+        self.y: int | float = 0
 
         # armas com ammo e cooldown
         self.weapons = []
@@ -204,7 +204,7 @@ class Interpreter:
             if op == "==": return left == right
         return False
 
-    def evaluate_value(self, node: Dict[str, Any]) -> int:
+    def evaluate_value(self, node: Dict[str, Any]) -> int | float | str:
         if node["type"] == "Literal": return node["value"]
         if node["type"] == "MemberAccess":
             unit = self.units.get(node["unit"])

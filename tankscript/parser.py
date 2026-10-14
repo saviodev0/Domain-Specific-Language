@@ -12,9 +12,22 @@ class Parser:
     def consume(self, expected_type: TokenType) -> Token:
         token = self.current_token()
         if token.type != expected_type:
-            raise SyntaxError(f"Linha {token.line}: Esperado token {expected_type.name}, mas obteve {token.type.name} ('{token.value}')")
+            raise SyntaxError(
+                f"Linha {token.line}, coluna {token.column}: Esperado token "
+                f"{expected_type.name}, mas obteve {token.type.name} ('{token.value}')"
+            )
         self.pos += 1
         return token
+
+    def consume_numeric(self) -> int | float:
+        token = self.current_token()
+        if token.type not in (TokenType.NUMBER, TokenType.FLOAT):
+            raise SyntaxError(
+                f"Linha {token.line}, coluna {token.column}: Esperado número, "
+                f"mas obteve {token.type.name} ('{token.value}')"
+            )
+        self.pos += 1
+        return token.value
 
     def match(self, *token_types: TokenType) -> bool:
         return self.current_token().type in token_types
@@ -62,7 +75,7 @@ class Parser:
                 weapons.append(self.parse_weapon())
             elif self.match(TokenType.IDENTIFIER):
                 prop_name = self.consume(TokenType.IDENTIFIER).value
-                prop_val = self.consume(TokenType.NUMBER).value
+                prop_val = self.consume_numeric()
                 properties[prop_name] = prop_val
 
         self.consume(TokenType.RBRACE)
@@ -82,7 +95,7 @@ class Parser:
         properties = {}
         while not self.match(TokenType.RBRACE):
             prop_name = self.consume(TokenType.IDENTIFIER).value
-            prop_val = self.consume(TokenType.NUMBER).value
+            prop_val = self.consume_numeric()
             properties[prop_name] = prop_val
 
         self.consume(TokenType.RBRACE)
@@ -122,8 +135,8 @@ class Parser:
         if token.type == TokenType.MOVE:
             self.consume(TokenType.MOVE)
             unit = self.consume(TokenType.IDENTIFIER).value
-            x = self.consume(TokenType.NUMBER).value
-            y = self.consume(TokenType.NUMBER).value
+            x = self.consume_numeric()
+            y = self.consume_numeric()
             return {"type": "MoveStatement", "unit": unit, "x": x, "y": y}
 
         elif token.type == TokenType.ATTACK:
@@ -142,7 +155,7 @@ class Parser:
         elif token.type == TokenType.DIVE:
             self.consume(TokenType.DIVE)
             unit = self.consume(TokenType.IDENTIFIER).value
-            depth = self.consume(TokenType.NUMBER).value
+            depth = self.consume_numeric()
             return {"type": "DiveStatement", "unit": unit, "depth": depth}
 
         elif token.type == TokenType.SURFACE:
@@ -196,7 +209,7 @@ class Parser:
 
     def parse_primary_expr(self) -> Dict[str, Any]:
         token = self.current_token()
-        if token.type == TokenType.NUMBER:
+        if token.type in (TokenType.NUMBER, TokenType.FLOAT, TokenType.STRING):
             self.pos += 1
             return {"type": "Literal", "value": token.value}
         elif token.type == TokenType.IDENTIFIER:
@@ -207,4 +220,6 @@ class Parser:
                 prop = self.consume(TokenType.IDENTIFIER).value
                 return {"type": "MemberAccess", "unit": unit, "property": prop}
             return {"type": "Identifier", "name": unit}
-        raise SyntaxError(f"Linha {token.line}: Expressão inválida com '{token.value}'")
+        raise SyntaxError(
+            f"Linha {token.line}, coluna {token.column}: Expressão inválida com '{token.value}'"
+        )

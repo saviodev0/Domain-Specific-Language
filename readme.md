@@ -71,91 +71,71 @@ Não precisas de instalar o Python localmente, apenas o Docker:
 
 #### Pré-requisitos
 - Python 3.10 ou superior instalado.
+- Java 11 ou superior para regenerar o lexer ANTLR.
 
 #### Passo a Passo
 
 1. Clona o repositório:
-   git clone https://github.com/teu-usuario/Domain-Specific-Language.git
-   cd Domain-Specific-Language
+# TankIO e TankScript
 
-2. Limpa a cache do Python (opcional, recomendado para garantir atualizações):
-   - Windows (PowerShell):
-     Remove-Item -Recurse -Force tankscript\__pycache__
-   - Linux/macOS:
-     rm -rf tankscript/__pycache__
+TankScript é uma linguagem específica para descrever batalhas táticas entre tanques e submarinos. O programa declara unidades, armas, equipas e ordens iniciais; o TankIO interpreta essas ordens no jogo.
 
-3. Inicia a aplicação:
-   python main.py
+## 1. A linguagem
 
----
+Este exemplo declara um tanque e sua posição inicial. O cenário completo está em `examples/espiral.tank`.
 
-## 🕹️ Comandos do CLI
-
-Durante o teu turno no terminal, podes executar as seguintes ações:
-
-| Comando | Exemplo | Descrição |
-| :--- | :--- | :--- |
-| `move` | `move Tiger1 50 50` | Move a unidade para a coordenada (X, Y). |
-| `fire` | `fire Tiger1 Cannon Shark1` | Dispara com a arma especificada contra o alvo. |
-| `dive` | `dive Shark1 40` | Faz o submarino submergir N metros. |
-| `surface` | `surface Shark1` | Traz o submarino de volta à superfície. |
-| `sonar` | `sonar Tiger1` | Emite um pulso para revelar áreas cobertas pela névoa. |
-| `exit` | `exit` | Encerra a partida. |
-
----
-
-## 📝 Exemplo de Código em TankScript (`.tank`)
-
-# Declaração do Tanque do Jogador
-tank Tiger1 {
+```tankscript
+# Define o tanque e suas propriedades.
+tank Falcon {
     hp 100
-    armor 30
-    speed 40
-    radar 70
-    gun Cannon {
-        damage 50
-        range 500
-        ammo 5
-        cooldown 1
-    }
+    armor 20
+    speed 35
+    radar 60.5
 }
 
-# Declaração do Submarino Inimigo
-submarine Shark1 {
-    hp 80
-    armor 10
-    speed 25
-    radar 90
-    torpedo T1 {
-        damage 70
-        range 800
-        ammo 3
-        cooldown 2
-    }
-}
+# Define a posição inicial.
+move Falcon 20 20
+```
 
-# Definição de Equipas
-team Blue {
-    Tiger1
-}
+A sintaxe e as decisões da linguagem estão em [docs/especificacao.md](docs/especificacao.md).
 
-team Red {
-    Shark1
-}
+## 2. Instalação e execução
 
-battle War {
-    Blue vs Red
-}
+Requisitos locais: Python 3.10 ou superior e Java 11 ou superior para gerar o lexer ANTLR. O código gerado não é versionado; gere-o antes de iniciar o jogo ou executar os testes.
 
-# Posições Iniciais
-move Tiger1 20 20
-move Shark1 170 80
-dive Shark1 40
+```sh
+python -m pip install -r requirements.txt
+python -m pip install -r requirements-antlr.txt
+sh gerar.sh
+python main.py
+```
 
----
+Para listar os tokens de um arquivo TankScript:
 
-## 📚 Documentação Complementar
+```sh
+python src/lexico.py examples/ola.tank
+```
 
-- `TankIO.md` — Especificação completa das regras de jogo e sintaxe.
-- `FUTURE_FEATURES.md` — Planeamento das próximas versões e novas funcionalidades.
-- `documentation.md` - Documentação de como usar cada funcionalidade.
+Para preparar o ambiente de desenvolvimento e os testes:
+
+```sh
+python -m pip install -r requirements-dev.txt
+python -m pytest
+```
+
+ANTLR e runtime usados: **4.13.2**. Para regenerar a gramática após alterá-la, execute `sh gerar.sh` novamente.
+
+## 3. Etapa atual
+
+O projeto está na **E2: especificação da linguagem e analisador léxico**. O repositório também contém parser, interpretador e jogo de etapas posteriores.
+
+## 4. Testes
+
+`python -m pytest` verifica as regras do lexer, localização de erros, parsing de literais e os três programas válidos e três inválidos da entrega.
+
+## Docker
+
+```sh
+docker build -f docker/Dockerfile -t tankio .
+docker run -it --rm tankio
+```

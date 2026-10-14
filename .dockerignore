@@ -4,5 +4,8 @@ __pycache__/
 *.pyd
 .git
 .gitignore
+gerado/
+*.tokens
+*.interp
 .vscode/
 .DS_Store

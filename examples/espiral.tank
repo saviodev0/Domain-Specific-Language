@@ -1,0 +1,43 @@
+# Cenario com tanque, submarino, equipes e comandos condicionais.
+tank Guard {
+    hp 100
+    armor 25
+    speed 35
+    radar 70
+    gun Cannon {
+        damage 45
+        range 500
+        ammo 4
+        cooldown 1
+    }
+}
+submarine DeepOne {
+    hp 85
+    armor 12
+    speed 25
+    radar 80
+    torpedo Torpedo1 {
+        damage 60
+        range 700
+        ammo 3
+        cooldown 2
+    }
+}
+team Blue {
+    Guard
+}
+team Red {
+    DeepOne
+}
+battle Spiral {
+    Blue vs Red
+}
+move Guard 30 30
+move DeepOne 150 70
+if "start" == "start" {
+    sonar Guard
+}
+repeat 2 {
+    move Guard 40 30
+    move Guard 50 40
+}

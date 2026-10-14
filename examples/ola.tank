@@ -1,0 +1,8 @@
+# Declaracao simples de unidade e posicao inicial.
+tank Falcon {
+    hp 100
+    armor 20
+    speed 35
+    radar 60.5
+}
+move Falcon 20 20

@@ -18,9 +18,9 @@ class GridRenderer:
     def clear_screen(self):
         os.system('cls' if os.name == 'nt' else 'clear')
 
-    def get_terrain_at(self, x: int, y: int) -> str:
-        gx = min(max(0, x // 10), self.width - 1)
-        gy = min(max(0, y // 10), self.height - 1)
+    def get_terrain_at(self, x: int | float, y: int | float) -> str:
+        gx = int(min(max(0, x // 10), self.width - 1))
+        gy = int(min(max(0, y // 10), self.height - 1))
         return self.terrain[gy][gx].strip()
 
     def draw(self, units: dict, player_team_members: list):
@@ -31,9 +31,9 @@ class GridRenderer:
         for name in player_team_members:
             u = units.get(name)
             if u and u.is_alive():
-                gx = min(max(0, u.x // 10), self.width - 1)
-                gy = min(max(0, u.y // 10), self.height - 1)
-                radar = getattr(u, 'radar_range', 60) // 10
+                gx = int(min(max(0, u.x // 10), self.width - 1))
+                gy = int(min(max(0, u.y // 10), self.height - 1))
+                radar = int(getattr(u, 'radar_range', 60) // 10)
                 for dy in range(-radar, radar + 1):
                     for dx in range(-radar, radar + 1):
                         nx, ny = gx + dx, gy + dy
@@ -44,8 +44,8 @@ class GridRenderer:
             if not unit.is_alive():
                 continue
 
-            gx = min(max(0, unit.x // 10), self.width - 1)
-            gy = min(max(0, unit.y // 10), self.height - 1)
+            gx = int(min(max(0, unit.x // 10), self.width - 1))
+            gy = int(min(max(0, unit.y // 10), self.height - 1))
             is_player_unit = name in player_team_members
             is_visible = (gx, gy) in visible_cells or getattr(unit, 'sonar_ping_turns', 0) > 0
 
