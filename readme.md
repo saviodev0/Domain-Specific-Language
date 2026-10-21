@@ -5,7 +5,7 @@
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![Status](https://img.shields.io/badge/Status-Em_Desenvolvimento-orange)
 
-O **TankIO** é um jogo de simulação tática baseado em turnos executado no terminal, movido por uma Linguagem de Domínio Específico (**DSL**) própria chamada **TankScript**. O projeto demonstra a construção completa de um compilador/interpretador (Lexer, Parser, AST e Interpretador) integrado a um motor de jogo com suporte a névoa de guerra, terrenos táticos e combate entre tanques e submarinos.
+O **TankIO** é um jogo de simulação tática baseado em turnos executado no terminal, movido por uma Linguagem de Domínio Específico (**DSL**) própria chamada **TankScript**. O projeto demonstra a construção completa de um compilador/interpretador (Lexer, Parser, AST e Interpretador) integrado a um motor de jogo com suporte a névoa de guerra, terrenos táticos e combate entre tanques e submarinos. Muito divertida
 
 ---
 
