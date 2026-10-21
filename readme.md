@@ -125,13 +125,37 @@ python -m pytest
 
 ANTLR e runtime usados: **4.13.2**. Para regenerar a gramática após alterá-la, execute `sh gerar.sh` novamente.
 
-## 3. Etapa atual
+No Windows PowerShell, gere o lexer com:
 
-O projeto está na **E2: especificação da linguagem e analisador léxico**. O repositório também contém parser, interpretador e jogo de etapas posteriores.
+```powershell
+$env:ANTLR4_TOOLS_ANTLR_VERSION = "4.13.2"
+$scripts = (python -c "import sysconfig; print(sysconfig.get_path('scripts', scheme='nt_user'))").Trim()
+$antlr4 = Join-Path $scripts "antlr4.exe"
+& $antlr4 -Dlanguage=Python3 -visitor -Xexact-output-dir -o gerado tankscript\TankScriptLexer.g4
+```
+
+## 3. Análise sintática (E3)
+
+O lexer ANTLR gera tokens que são consumidos pelo parser manual em Python (`tankscript/parser.py`). O parser reconhece declarações e instruções, valida o fechamento dos blocos e monta uma AST em dicionários/listas compatível com o interpretador. Os blocos `if` e `repeat` são recursivos; as condições aceitam uma comparação (`<`, `>` ou `==`) entre valores primários ou acessos `unidade.propriedade`. A gramática completa e as decisões estão em [docs/especificacao.md](docs/especificacao.md).
 
 ## 4. Testes
 
-`python -m pytest` verifica as regras do lexer, localização de erros, parsing de literais e os três programas válidos e três inválidos da entrega.
+Instale as dependências e gere o lexer antes de executar os testes:
+
+```powershell
+python -m pip install -r requirements.txt -r requirements-antlr.txt -r requirements-dev.txt
+# Gere o lexer usando o comando PowerShell da seção anterior.
+python -m pytest tests/test_parser.py -q
+python -m pytest -q
+```
+
+O primeiro comando de testes valida gramática e AST; o segundo executa toda a suíte, incluindo lexer e exemplos da E2. Para reproduzir um erro sintático com o parser:
+
+```sh
+python -c "from tankscript import Lexer, Parser; Parser(Lexer('move Falcon 20').tokenize()).parse()"
+```
+
+O erro informa linha, coluna, token encontrado e o elemento esperado.
 
 ## Docker
 

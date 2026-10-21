@@ -106,3 +106,49 @@ O caractere `#` inicia um comentário que vai até o fim da linha. Comentários 
 1. Não declara variáveis nem permite atribuições.
 2. Não calcula expressões aritméticas; valores numéricos são literais.
 3. Não possui laços `while`/`for`, funções definidas pelo usuário ou chamadas de função.
+
+## 8. Gramática sintática (E3)
+
+O lexer ANTLR entrega tokens ao parser manual em Python (`tankscript/parser.py`). A gramática abaixo descreve a sintaxe reconhecida pelo parser; `{ ... }` representa repetição, `[ ... ]` representa opcionalidade e `|` representa alternativas:
+
+```ebnf
+programa       = { declaracao | instrucao }, EOF ;
+declaracao     = unidade | equipe | batalha ;
+unidade        = ("tank" | "submarine"), IDENTIFICADOR, "{",
+                 { propriedade | arma }, "}" ;
+arma           = ("gun" | "torpedo"), IDENTIFICADOR, "{",
+                 { propriedade }, "}" ;
+propriedade    = IDENTIFIER, (NUMBER | FLOAT) ;
+equipe         = "team", IDENTIFIER, "{", { IDENTIFIER }, "}" ;
+batalha        = "battle", IDENTIFIER, "{", IDENTIFIER, "vs", IDENTIFIER, "}" ;
+
+instrucao      = movimento | ataque | disparo | mergulho | emersao
+               | sonar | condicional | repeticao ;
+movimento      = "move", IDENTIFIER, numero, numero ;
+ataque         = "attack", IDENTIFIER, IDENTIFIER ;
+disparo        = "fire", IDENTIFIER, IDENTIFIER, IDENTIFIER ;
+mergulho       = "dive", IDENTIFIER, numero ;
+emersao        = "surface", IDENTIFIER ;
+sonar          = "sonar", IDENTIFIER ;
+condicional    = "if", comparacao, "{", { instrucao }, "}" ;
+repeticao      = "repeat", NUMBER, "{", { instrucao }, "}" ;
+comparacao     = primario, ("<" | ">" | "=="), primario ;
+primario       = numero | STRING | acesso_propriedade | IDENTIFIER ;
+acesso_propriedade = IDENTIFIER, ".", IDENTIFIER ;
+numero         = NUMBER | FLOAT ;
+```
+
+Os blocos de `if` e `repeat` são recursivos: podem conter qualquer instrução, inclusive outros blocos. Declarações não são instruções e, portanto, não são válidas dentro desses blocos. As três comparações têm a mesma precedência e cada condição admite exatamente uma comparação; o acesso `unidade.propriedade` é reconhecido como um único primário, sem ambiguidade com o operador de comparação. `+` e `-` continuam sendo tokens léxicos, mas não são aceitos pela gramática sintática.
+
+O parser constrói a AST como dicionários e listas aninhados, mantendo os campos `declarations` e `statements` utilizados pelo interpretador. Nós como `IfStatement` e `RepeatStatement` contêm a lista `body`; condições comparativas contêm nós `left` e `right`, com `MemberAccess` para acesso a propriedade. A árvore é construída antes e independentemente da execução.
+
+Exemplos:
+
+```tankscript
+if Tank1.hp > 20 { repeat 2 { sonar Tank1 } } # válido e recursivo
+move Tank1 10                                  # inválido: falta a coordenada y
+if 1 < 2 < 3 { sonar Tank1 }                   # inválido: comparação encadeada
+repeat 1 { tank Tank1 {} }                     # inválido: declaração dentro do bloco
+```
+
+Execute os testes do parser com `python -m pytest tests/test_parser.py` e a suíte completa com `python -m pytest`.
