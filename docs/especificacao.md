@@ -189,8 +189,10 @@ O parser manual constrói, a partir dos mesmos tokens, uma AST em dicionários e
 
 ### 8.6 Exemplos e erros
 
+As linhas abaixo são julgadas apenas pela sintaxe; a primeira só passaria também pela análise semântica (seção 9) se `Tank1` estivesse declarado.
+
 ```tankscript
-if Tank1.hp > 20 { repeat 2 { sonar Tank1 } } # válido e recursivo
+if Tank1.hp > 20 { repeat 2 { sonar Tank1 } } # sintaticamente válido e recursivo
 move Tank1 10                                  # inválido: falta a coordenada y
 if 1 < 2 < 3 { sonar Tank1 }                   # inválido: comparação encadeada
 repeat 1 { tank Tank1 {} }                     # inválido: declaração dentro do bloco
