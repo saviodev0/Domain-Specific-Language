@@ -2,4 +2,6 @@
 set -eu
 
 export ANTLR4_TOOLS_ANTLR_VERSION=4.13.2
-antlr4 -Dlanguage=Python3 -visitor -Xexact-output-dir -o gerado tankscript/TankScriptLexer.g4
+mkdir -p gerado
+antlr4 -Dlanguage=Python3 -visitor -Xexact-output-dir -o gerado -lib gerado \
+    tankscript/TankScriptLexer.g4 tankscript/TankScriptParser.g4

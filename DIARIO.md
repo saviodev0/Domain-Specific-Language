@@ -16,3 +16,12 @@
 - Completamos o parser recursivo preservando o formato de AST existente; agora erros sintáticos incluem linha/coluna e blocos/entradas incompletos são rejeitados.
 - Registramos a gramática EBNF, a estrutura da árvore e exemplos de fronteira na especificação; atualizamos as instruções e adicionamos testes focados no parser.
 - Instalamos as dependências de teste e geração já declaradas no projeto, geramos o lexer ANTLR e validamos a suíte completa: `python -m pytest -q` — 64 testes passaram.
+
+## 2026-10-28
+
+- Revisamos a E3 com base nas aulas 10 (árvore sintática), 11 (autômatos de pilha) e 12 (análise descendente).
+- Escrevemos a gramática sintática em ANTLR (`tankscript/TankScriptParser.g4`), com regras de parser em minúscula, `EOF` na regra inicial e blocos recursivos; o `gerar.sh` agora gera lexer e parser.
+- Fatoramos a regra `primario` na especificação: `acesso_propriedade` e `IDENTIFIER` começavam com o mesmo token (conflito de First). Corrigimos nomes de tokens misturados na EBNF.
+- Documentamos terminais e não terminais, ausência de ambiguidade e de recursão à esquerda, e a tabela de First e Follow das regras de escolha.
+- Criamos `src/sintatico.py` para exibir a árvore sintática e testes que conferem que o parser ANTLR e o parser manual aceitam e rejeitam os mesmos programas.
+- Removemos o `antlr-4.13.2-complete.jar` do repositório: o `antlr4-tools` baixa a versão fixada em `gerar.sh`, e `*.jar` passou a ser ignorado.

@@ -109,40 +109,85 @@ O caractere `#` inicia um comentário que vai até o fim da linha. Comentários 
 
 ## 8. Gramática sintática (E3)
 
-O lexer ANTLR entrega tokens ao parser manual em Python (`tankscript/parser.py`). A gramática abaixo descreve a sintaxe reconhecida pelo parser; `{ ... }` representa repetição, `[ ... ]` representa opcionalidade e `|` representa alternativas:
+A gramática sintática está em `tankscript/TankScriptParser.g4` e usa os tokens de `tankscript/TankScriptLexer.g4`. O `gerar.sh` gera o lexer e o parser ANTLR em `gerado/`. O parser manual em Python (`tankscript/parser.py`) reconhece exatamente a mesma linguagem e monta a AST usada pelo interpretador; os testes conferem que os dois aceitam e rejeitam os mesmos programas.
+
+### 8.1 Terminais e não terminais
+
+Seguindo a convenção do ANTLR, os **terminais** são os tokens do lexer, escritos em MAIÚSCULA (`TANK`, `IDENTIFIER`, `NUMBER`, `LBRACE`...). Os **não terminais** são as regras de parser, escritas em minúscula. Um símbolo é não terminal quando tem regra própria, isto é, quando aparece à esquerda dos dois-pontos.
+
+Não terminais: `programa`, `declaracao`, `unidade`, `arma`, `propriedade`, `equipe`, `batalha`, `instrucao`, `movimento`, `ataque`, `disparo`, `mergulho`, `emersao`, `sonar`, `condicional`, `repeticao`, `bloco`, `comparacao`, `primario` e `numero`. A regra inicial é `programa`.
+
+### 8.2 Regras
+
+Abaixo, a mesma gramática do `.g4` em EBNF: `{ ... }` é repetição (o `*` do ANTLR), `[ ... ]` é opcional (o `?`) e `|` separa alternativas.
 
 ```ebnf
-programa       = { declaracao | instrucao }, EOF ;
-declaracao     = unidade | equipe | batalha ;
-unidade        = ("tank" | "submarine"), IDENTIFICADOR, "{",
-                 { propriedade | arma }, "}" ;
-arma           = ("gun" | "torpedo"), IDENTIFICADOR, "{",
-                 { propriedade }, "}" ;
-propriedade    = IDENTIFIER, (NUMBER | FLOAT) ;
-equipe         = "team", IDENTIFIER, "{", { IDENTIFIER }, "}" ;
-batalha        = "battle", IDENTIFIER, "{", IDENTIFIER, "vs", IDENTIFIER, "}" ;
+programa    = { declaracao | instrucao }, EOF ;
+declaracao  = unidade | equipe | batalha ;
+unidade     = ("tank" | "submarine"), IDENTIFIER, "{", { propriedade | arma }, "}" ;
+arma        = ("gun" | "torpedo"), IDENTIFIER, "{", { propriedade }, "}" ;
+propriedade = IDENTIFIER, numero ;
+equipe      = "team", IDENTIFIER, "{", { IDENTIFIER }, "}" ;
+batalha     = "battle", IDENTIFIER, "{", IDENTIFIER, "vs", IDENTIFIER, "}" ;
 
-instrucao      = movimento | ataque | disparo | mergulho | emersao
-               | sonar | condicional | repeticao ;
-movimento      = "move", IDENTIFIER, numero, numero ;
-ataque         = "attack", IDENTIFIER, IDENTIFIER ;
-disparo        = "fire", IDENTIFIER, IDENTIFIER, IDENTIFIER ;
-mergulho       = "dive", IDENTIFIER, numero ;
-emersao        = "surface", IDENTIFIER ;
-sonar          = "sonar", IDENTIFIER ;
-condicional    = "if", comparacao, "{", { instrucao }, "}" ;
-repeticao      = "repeat", NUMBER, "{", { instrucao }, "}" ;
-comparacao     = primario, ("<" | ">" | "=="), primario ;
-primario       = numero | STRING | acesso_propriedade | IDENTIFIER ;
-acesso_propriedade = IDENTIFIER, ".", IDENTIFIER ;
-numero         = NUMBER | FLOAT ;
+instrucao   = movimento | ataque | disparo | mergulho | emersao
+            | sonar | condicional | repeticao ;
+movimento   = "move", IDENTIFIER, numero, numero ;
+ataque      = "attack", IDENTIFIER, IDENTIFIER ;
+disparo     = "fire", IDENTIFIER, IDENTIFIER, IDENTIFIER ;
+mergulho    = "dive", IDENTIFIER, numero ;
+emersao     = "surface", IDENTIFIER ;
+sonar       = "sonar", IDENTIFIER ;
+condicional = "if", comparacao, bloco ;
+repeticao   = "repeat", NUMBER, bloco ;
+bloco       = "{", { instrucao }, "}" ;
+
+comparacao  = primario, ("<" | ">" | "=="), primario ;
+primario    = numero | STRING | IDENTIFIER, [ ".", IDENTIFIER ] ;
+numero      = NUMBER | FLOAT ;
 ```
 
-Os blocos de `if` e `repeat` são recursivos: podem conter qualquer instrução, inclusive outros blocos. Declarações não são instruções e, portanto, não são válidas dentro desses blocos. As três comparações têm a mesma precedência e cada condição admite exatamente uma comparação; o acesso `unidade.propriedade` é reconhecido como um único primário, sem ambiguidade com o operador de comparação. `+` e `-` continuam sendo tokens léxicos, mas não são aceitos pela gramática sintática.
+- **Aninhamento:** `bloco` chama `instrucao`, que pode chamar `condicional` ou `repeticao`, que chamam `bloco` de novo. Essa recursão permite blocos dentro de blocos sem limite de profundidade, e é por isso que a sintaxe precisa de uma gramática livre de contexto (e de uma pilha), e não de um autômato finito. Declarações não são instruções e, portanto, não são válidas dentro de blocos.
+- **EOF:** a regra inicial termina em `EOF`, então o parser precisa consumir o arquivo inteiro; texto sobrando depois do último comando é erro, e não é ignorado em silêncio.
+- **Sem recursão à esquerda:** nenhuma regra começa chamando a si mesma.
 
-O parser constrói a AST como dicionários e listas aninhados, mantendo os campos `declarations` e `statements` utilizados pelo interpretador. Nós como `IfStatement` e `RepeatStatement` contêm a lista `body`; condições comparativas contêm nós `left` e `right`, com `MemberAccess` para acesso a propriedade. A árvore é construída antes e independentemente da execução.
+### 8.3 Ambiguidade e precedência
 
-Exemplos:
+Cada condição admite **exatamente uma** comparação entre dois `primario`, e `primario` não contém operadores. Por isso toda entrada válida tem uma única árvore: não existe uma expressão como `2 + 3 * 4` com duas leituras possíveis, e a ordem das alternativas em `comparacao` não muda o resultado. Comparações encadeadas como `1 < 2 < 3` são rejeitadas. O acesso `unidade.propriedade` faz parte de um único `primario` e é resolvido antes da comparação.
+
+`+` e `-` continuam sendo tokens léxicos, mas não aparecem em nenhuma regra. Se a linguagem ganhar aritmética, a ordem das alternativas no `.g4` passará a definir a precedência (`*` e `/` antes de `+` e `-`, e estes antes das comparações).
+
+### 8.4 Como o parser escolhe a alternativa (First e Follow)
+
+O parser olha **um token à frente** para decidir qual alternativa seguir. Isso funciona porque, em cada escolha, as alternativas começam com tokens diferentes (seus conjuntos **First** não têm nada em comum). Quando uma repetição `{ ... }` pode terminar, o parser sai dela ao ver um token do conjunto **Follow**.
+
+| Regra | First (o que pode começar) | Follow (o que pode vir depois) |
+|---|---|---|
+| `declaracao` | `tank` `submarine` `team` `battle` | First(`declaracao`) ∪ First(`instrucao`) ∪ {`EOF`} |
+| `instrucao` | `move` `attack` `fire` `dive` `surface` `sonar` `if` `repeat` | First(`declaracao`) ∪ First(`instrucao`) ∪ {`EOF`, `}`} |
+| `bloco` | `{` | igual a Follow(`instrucao`) |
+| `propriedade` | `IDENTIFIER` | `IDENTIFIER` `gun` `torpedo` `}` |
+| `arma` | `gun` `torpedo` | `IDENTIFIER` `gun` `torpedo` `}` |
+| `comparacao` | `NUMBER` `FLOAT` `STRING` `IDENTIFIER` | `{` |
+| `primario` | `NUMBER` `FLOAT` `STRING` `IDENTIFIER` | `<` `>` `==` `{` |
+
+- Em `programa`, First(`declaracao`) e First(`instrucao`) são disjuntos: um token basta para saber se vem uma declaração ou uma instrução. A repetição termina ao ver `EOF`.
+- Dentro de `unidade`, `IDENTIFIER` indica uma `propriedade`, `gun`/`torpedo` indicam uma `arma`, e `}` encerra a repetição.
+- Em `primario`, a versão anterior desta especificação tinha duas alternativas começando com `IDENTIFIER` (`acesso_propriedade` e `IDENTIFIER`), ou seja, um conflito de First. A regra foi fatorada: depois do `IDENTIFIER`, um `.` indica acesso a propriedade; qualquer token de Follow(`primario`) indica que o primário terminou.
+
+### 8.5 Árvore sintática e AST
+
+`python src/sintatico.py arquivo.tank` mostra a árvore sintática produzida pelo parser ANTLR: os nós internos são as regras e as folhas são os tokens. Para `repeat 2 { if Alpha.hp > 20 { sonar Alpha } }`:
+
+```text
+(programa (instrucao (repeticao repeat 2 (bloco { (instrucao (condicional if
+  (comparacao (primario Alpha . hp) > (primario (numero 20)))
+  (bloco { (instrucao (sonar sonar Alpha)) }))) }))) <EOF>)
+```
+
+O parser manual constrói, a partir dos mesmos tokens, uma AST em dicionários e listas aninhados, mantendo os campos `declarations` e `statements` utilizados pelo interpretador. Nós como `IfStatement` e `RepeatStatement` contêm a lista `body`; condições comparativas contêm nós `left` e `right`, com `MemberAccess` para acesso a propriedade. A árvore é construída antes e independentemente da execução.
+
+### 8.6 Exemplos e erros
 
 ```tankscript
 if Tank1.hp > 20 { repeat 2 { sonar Tank1 } } # válido e recursivo
@@ -150,5 +195,7 @@ move Tank1 10                                  # inválido: falta a coordenada y
 if 1 < 2 < 3 { sonar Tank1 }                   # inválido: comparação encadeada
 repeat 1 { tank Tank1 {} }                     # inválido: declaração dentro do bloco
 ```
+
+Os dois parsers informam linha e coluna. O parser ANTLR usa as mensagens padrão da ferramenta, por exemplo `Linha 1, coluna 10: mismatched input '<' expecting '{'`: o token entre aspas depois de `input` é o que foi encontrado, e o `expecting` diz o que a regra esperava naquele ponto.
 
 Execute os testes do parser com `python -m pytest tests/test_parser.py` e a suíte completa com `python -m pytest`.

@@ -20,8 +20,8 @@ class TokenType(enum.Enum):
     SURFACE = "surface"
     IF = "if"
     VS = "vs"
-    REPEAT = "repeat"   # NOVO
-    SONAR = "sonar"     # NOVO
+    REPEAT = "repeat"
+    SONAR = "sonar"
 
     IDENTIFIER = "IDENTIFIER"
     NUMBER = "NUMBER"

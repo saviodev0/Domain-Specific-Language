@@ -101,7 +101,7 @@ A sintaxe e as decisões da linguagem estão em [docs/especificacao.md](docs/esp
 
 ## 2. Instalação e execução
 
-Requisitos locais: Python 3.10 ou superior e Java 11 ou superior para gerar o lexer ANTLR. O código gerado não é versionado; gere-o antes de iniciar o jogo ou executar os testes.
+Requisitos locais: Python 3.10 ou superior e Java 11 ou superior para gerar o lexer e o parser ANTLR. O código gerado não é versionado; gere-o antes de iniciar o jogo ou executar os testes.
 
 ```sh
 python -m pip install -r requirements.txt
@@ -131,12 +131,25 @@ No Windows PowerShell, gere o lexer com:
 $env:ANTLR4_TOOLS_ANTLR_VERSION = "4.13.2"
 $scripts = (python -c "import sysconfig; print(sysconfig.get_path('scripts', scheme='nt_user'))").Trim()
 $antlr4 = Join-Path $scripts "antlr4.exe"
-& $antlr4 -Dlanguage=Python3 -visitor -Xexact-output-dir -o gerado tankscript\TankScriptLexer.g4
+New-Item -ItemType Directory -Force gerado | Out-Null
+& $antlr4 -Dlanguage=Python3 -visitor -Xexact-output-dir -o gerado -lib gerado tankscript\TankScriptLexer.g4 tankscript\TankScriptParser.g4
 ```
 
 ## 3. Análise sintática (E3)
 
-O lexer ANTLR gera tokens que são consumidos pelo parser manual em Python (`tankscript/parser.py`). O parser reconhece declarações e instruções, valida o fechamento dos blocos e monta uma AST em dicionários/listas compatível com o interpretador. Os blocos `if` e `repeat` são recursivos; as condições aceitam uma comparação (`<`, `>` ou `==`) entre valores primários ou acessos `unidade.propriedade`. A gramática completa e as decisões estão em [docs/especificacao.md](docs/especificacao.md).
+A gramática sintática está em `tankscript/TankScriptParser.g4`, com regras de parser em minúscula e a regra inicial `programa` terminando em `EOF`. Para ver a árvore sintática de um programa:
+
+```sh
+python src/sintatico.py examples/espiral.tank
+```
+
+Para testar uma regra isolada enquanto edita a gramática, sem gerar código (digite a entrada e encerre com Ctrl+D):
+
+```sh
+antlr4-parse tankscript/TankScriptLexer.g4 tankscript/TankScriptParser.g4 instrucao -tree
+```
+
+Os mesmos tokens também são consumidos pelo parser manual em Python (`tankscript/parser.py`), que reconhece a mesma linguagem e monta a AST usada pelo jogo. O parser reconhece declarações e instruções, valida o fechamento dos blocos e monta uma AST em dicionários/listas compatível com o interpretador. Os blocos `if` e `repeat` são recursivos; as condições aceitam uma comparação (`<`, `>` ou `==`) entre valores primários ou acessos `unidade.propriedade`. A gramática completa e as decisões estão em [docs/especificacao.md](docs/especificacao.md).
 
 ## 4. Testes
 
