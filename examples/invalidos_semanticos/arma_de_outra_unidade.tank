@@ -1,0 +1,14 @@
+# Falcon tenta disparar o torpedo do submarino.
+tank Falcon {
+    hp 100
+    gun Cannon {
+        damage 40
+    }
+}
+submarine Shark {
+    hp 80
+    torpedo T1 {
+        damage 70
+    }
+}
+fire Falcon T1 Shark
