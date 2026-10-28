@@ -208,5 +208,6 @@ class Interpreter:
         if node["type"] == "Literal": return node["value"]
         if node["type"] == "MemberAccess":
             unit = self.units.get(node["unit"])
-            if unit: return getattr(unit, node["property"], 0)
+            attribute = "radar_range" if node["property"] == "radar" else node["property"]
+            if unit: return getattr(unit, attribute, 0)
         return 0

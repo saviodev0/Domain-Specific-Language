@@ -1,0 +1,7 @@
+# Compara pontos de vida com texto.
+tank Falcon {
+    hp 100
+}
+if Falcon.hp > "muito" {
+    sonar Falcon
+}

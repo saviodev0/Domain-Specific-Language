@@ -25,3 +25,11 @@
 - Documentamos terminais e não terminais, ausência de ambiguidade e de recursão à esquerda, e a tabela de First e Follow das regras de escolha.
 - Criamos `src/sintatico.py` para exibir a árvore sintática e testes que conferem que o parser ANTLR e o parser manual aceitam e rejeitam os mesmos programas.
 - Removemos o `antlr-4.13.2-complete.jar` do repositório: o `antlr4-tools` baixa a versão fixada em `gerar.sh`, e `*.jar` passou a ser ignorado.
+
+## 2026-10-28 (E4)
+
+- Implementamos a análise semântica em `tankscript/semantico.py` como *visitor* da árvore ANTLR, com tabela de símbolos de unidades, armas, equipes e batalhas.
+- As regras verificam nomes (declarações repetidas, unidades, armas e equipes não declaradas, `dive`/`surface` só em submarino) e tipos (propriedades permitidas, valores inteiros, comparações entre tipos compatíveis); todos os erros são relatados com linha e coluna.
+- A análise encontrou um erro real em `examples/quadrado.tank`: a batalha citava a equipe `Red`, que não existia. Adicionamos a equipe e um submarino.
+- Corrigimos o interpretador: `unidade.radar` em condições sempre valia 0, porque o atributo interno se chama `radar_range`.
+- O `main.py` agora executa as análises léxica, sintática e semântica antes de iniciar o jogo. Criamos `src/semantico.py`, três exemplos em `examples/invalidos_semanticos/` e `tests/test_semantico.py`.

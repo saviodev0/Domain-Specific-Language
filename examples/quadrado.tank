@@ -14,6 +14,21 @@ tank Atlas {
 team Blue {
     Atlas
 }
+submarine Coral {
+    hp 80
+    armor 10
+    speed 25
+    radar 70
+    torpedo Dardo {
+        damage 50
+        range 600
+        ammo 3
+        cooldown 2
+    }
+}
+team Red {
+    Coral
+}
 battle Training {
     Blue vs Red
 }

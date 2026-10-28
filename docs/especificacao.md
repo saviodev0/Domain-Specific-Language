@@ -189,8 +189,10 @@ O parser manual constrói, a partir dos mesmos tokens, uma AST em dicionários e
 
 ### 8.6 Exemplos e erros
 
+As linhas abaixo são julgadas apenas pela sintaxe; a primeira só passaria também pela análise semântica (seção 9) se `Tank1` estivesse declarado.
+
 ```tankscript
-if Tank1.hp > 20 { repeat 2 { sonar Tank1 } } # válido e recursivo
+if Tank1.hp > 20 { repeat 2 { sonar Tank1 } } # sintaticamente válido e recursivo
 move Tank1 10                                  # inválido: falta a coordenada y
 if 1 < 2 < 3 { sonar Tank1 }                   # inválido: comparação encadeada
 repeat 1 { tank Tank1 {} }                     # inválido: declaração dentro do bloco
@@ -199,3 +201,60 @@ repeat 1 { tank Tank1 {} }                     # inválido: declaração dentro 
 Os dois parsers informam linha e coluna. O parser ANTLR usa as mensagens padrão da ferramenta, por exemplo `Linha 1, coluna 10: mismatched input '<' expecting '{'`: o token entre aspas depois de `input` é o que foi encontrado, e o `expecting` diz o que a regra esperava naquele ponto.
 
 Execute os testes do parser com `python -m pytest tests/test_parser.py` e a suíte completa com `python -m pytest`.
+
+## 9. Análise semântica (E4)
+
+A análise semântica está em `tankscript/semantico.py`. Ela percorre a árvore sintática do ANTLR com um *visitor* (a classe `TankScriptParserVisitor`, gerada pela opção `-visitor` do `gerar.sh`) e só roda depois que as análises léxica e sintática terminam sem erro. O `main.py` executa as três fases antes de iniciar o jogo, e `python src/semantico.py arquivo.tank` executa só a verificação.
+
+### 9.1 Tabela de símbolos
+
+A tabela registra cada nome declarado e o que ele significa:
+
+| Categoria | Guarda |
+|---|---|
+| unidade | tipo (`tank` ou `submarine`) e armas, com o tipo de cada uma (`gun` ou `torpedo`) |
+| equipe | unidades que a compõem |
+| batalha | nome |
+
+A análise faz duas passagens: primeiro registra todas as declarações (unidades, depois equipes, depois batalhas) e só então verifica as instruções. Por isso uma instrução pode aparecer antes da declaração da unidade que usa, como já acontecia no interpretador, que executa as declarações antes das instruções.
+
+### 9.2 Propriedades e seus tipos
+
+| Onde | Propriedade | Tipo |
+|---|---|---|
+| `tank` e `submarine` | `hp`, `armor`, `speed` | inteiro |
+| `tank` e `submarine` | `radar` | inteiro ou real |
+| só `submarine` | `depth` | inteiro ou real |
+| `gun` e `torpedo` | `damage`, `range`, `ammo`, `cooldown` | inteiro |
+
+Nas condições, `unidade.propriedade` aceita `hp`, `armor`, `speed`, `radar`, `depth`, `x` e `y`, e sempre tem tipo número.
+
+### 9.3 Regras
+
+**Nomes**
+
+- Unidade, equipe e batalha não podem ser declaradas duas vezes com o mesmo nome; arma e propriedade não podem se repetir dentro da mesma declaração.
+- Toda unidade usada em instrução, equipe ou condição precisa estar declarada.
+- Uma unidade aparece no máximo uma vez em uma equipe, e pertence a no máximo uma equipe.
+- A batalha só pode citar equipes declaradas, e uma equipe não enfrenta a si mesma.
+- Em `fire`, a arma precisa pertencer ao atacante; em `attack`, o atacante precisa ter pelo menos uma arma.
+- `dive` e `surface` só valem para submarinos.
+
+**Tipos**
+
+- Propriedade fora da tabela 9.2 é erro, inclusive `depth` em tanque.
+- Propriedade inteira não aceita valor real, como `hp 10.5`.
+- `<` e `>` comparam dois números; `==` compara dois valores do mesmo tipo (número com número, texto com texto).
+- Um identificador sozinho não tem valor numa condição, pois a linguagem não tem variáveis: use `unidade.propriedade`.
+
+### 9.4 Mensagens
+
+Ao contrário da análise sintática, que para no primeiro erro, a análise semântica relata **todos** os erros encontrados, em ordem de posição, cada um com linha e coluna:
+
+```text
+$ python src/semantico.py examples/invalidos_semanticos/arma_de_outra_unidade.tank
+Erro semântico: Linha 14, coluna 13: 'Falcon' não possui a arma 'T1'
+1 erro(s) semântico(s)
+```
+
+Os exemplos em `examples/invalidos_semanticos/` estão corretos léxica e sintaticamente e falham só nesta fase.

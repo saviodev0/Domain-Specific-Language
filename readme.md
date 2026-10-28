@@ -6,7 +6,7 @@
 
 O **TankIO** é um jogo de simulação tática por turnos, executado no terminal e controlado por uma linguagem específica de domínio própria, a **TankScript**. Um programa TankScript declara unidades, armas, equipes e ordens iniciais; o TankIO interpreta essas ordens e conduz a partida.
 
-O projeto implementa as fases de um compilador/interpretador (lexer, parser, árvore sintática e interpretador) integradas a um motor de jogo com névoa de guerra, terrenos táticos e combate entre tanques e submarinos.
+O projeto implementa as fases de um compilador/interpretador (lexer, parser, árvore sintática, análise semântica e interpretador) integradas a um motor de jogo com névoa de guerra, terrenos táticos e combate entre tanques e submarinos.
 
 ## Funcionalidades
 
@@ -45,6 +45,9 @@ arquivo .tank
  Lexer (ANTLR, TankScriptLexer.g4)        caracteres → tokens; descarta espaços e comentários '#'
      │
      ├──▶ Parser ANTLR (TankScriptParser.g4)   tokens → árvore sintática (src/sintatico.py)
+     │         │
+     │         ▼
+     │    Análise semântica (visitor)       nomes declarados e tipos (src/semantico.py)
      │
      ▼
  Parser manual (tankscript/parser.py)      tokens → AST em dicionários e listas
@@ -55,7 +58,7 @@ arquivo .tank
      └──▶ EnemyAI                           ações do adversário
 ```
 
-Os dois parsers reconhecem a mesma linguagem; os testes conferem que aceitam e rejeitam os mesmos programas. O código ANTLR é gerado em `gerado/`, que não é versionado.
+Os dois parsers reconhecem a mesma linguagem; os testes conferem que aceitam e rejeitam os mesmos programas. O jogo só inicia se o cenário passar pelas análises léxica, sintática e semântica. O código ANTLR é gerado em `gerado/`, que não é versionado.
 
 ## Como executar
 
@@ -112,10 +115,22 @@ Testar uma regra da gramática isoladamente, sem gerar código (digite a entrada
 antlr4-parse tankscript/TankScriptLexer.g4 tankscript/TankScriptParser.g4 instrucao -tree
 ```
 
+Verificar nomes e tipos (análise semântica):
+
+```sh
+python src/semantico.py examples/espiral.tank
+```
+
 Erros léxicos e sintáticos informam linha, coluna, o que foi encontrado e o que era esperado, por exemplo:
 
 ```text
 Erro: Linha 1, coluna 10: mismatched input '<' expecting '{'
+```
+
+A análise semântica relata todos os erros de nome e de tipo de uma vez, por exemplo:
+
+```text
+Erro semântico: Linha 5, coluna 6: unidade 'Ghost' não declarada
 ```
 
 ## Testes
@@ -127,11 +142,11 @@ python -m pip install -r requirements-dev.txt
 python -m pytest
 ```
 
-Para rodar apenas os testes do parser e da gramática, use `python -m pytest tests/test_parser.py`.
+Para rodar apenas os testes do parser e da gramática, use `python -m pytest tests/test_parser.py`; para a análise semântica, `python -m pytest tests/test_semantico.py`.
 
 ## Documentação
 
-- [docs/especificacao.md](docs/especificacao.md): especificação da TankScript, gramática, First e Follow.
+- [docs/especificacao.md](docs/especificacao.md): especificação da TankScript, gramática, First e Follow, e regras semânticas.
 - [documentation.md](documentation.md): regras do jogo TankIO.
 - [future.md](future.md): planos de expansão.
 - [DIARIO.md](DIARIO.md): diário de desenvolvimento das entregas.

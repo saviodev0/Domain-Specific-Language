@@ -1,5 +1,6 @@
 import sys
 from tankscript import Lexer, Parser, Interpreter, GridRenderer, EnemyAI
+from tankscript.semantico import ErroSemantico, analisar
 
 def main():
     renderer = GridRenderer(width=20, height=10)
@@ -10,6 +11,16 @@ def main():
             code = file.read()
     except FileNotFoundError:
         print(f"Erro: Arquivo '{script_path}' não encontrado.")
+        sys.exit(1)
+
+    try:
+        analisar(code)
+    except SyntaxError as err:
+        print(f"Erro: {err}")
+        sys.exit(1)
+    except ErroSemantico as err:
+        for mensagem in err.erros:
+            print(f"Erro semântico: {mensagem}")
         sys.exit(1)
 
     # 1. Parsing
