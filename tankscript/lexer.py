@@ -9,8 +9,10 @@ from gerado.TankScriptLexer import TankScriptLexer as GeneratedTankScriptLexer
 class TokenType(enum.Enum):
     TANK = "tank"
     SUBMARINE = "submarine"
+    AIRCRAFT = "aircraft"
     GUN = "gun"
     TORPEDO = "torpedo"
+    MISSILE = "missile"
     TEAM = "team"
     BATTLE = "battle"
     MOVE = "move"

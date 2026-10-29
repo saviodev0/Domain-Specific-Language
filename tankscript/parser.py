@@ -7,6 +7,7 @@ class Parser:
     DECLARATION_STARTS = (
         TokenType.TANK,
         TokenType.SUBMARINE,
+        TokenType.AIRCRAFT,
         TokenType.TEAM,
         TokenType.BATTLE,
     )
@@ -94,6 +95,8 @@ class Parser:
             return self.parse_unit_declaration("TankDeclaration")
         if token.type is TokenType.SUBMARINE:
             return self.parse_unit_declaration("SubmarineDeclaration")
+        if token.type is TokenType.AIRCRAFT:
+            return self.parse_unit_declaration("AircraftDeclaration")
         if token.type is TokenType.TEAM:
             return self.parse_team()
         if token.type is TokenType.BATTLE:
@@ -110,7 +113,7 @@ class Parser:
         while not self.match(TokenType.RBRACE):
             if self.match(TokenType.EOF):
                 self._raise_expected(self.current_token(), "RBRACE para fechar a declaração")
-            if self.match(TokenType.GUN, TokenType.TORPEDO):
+            if self.match(TokenType.GUN, TokenType.TORPEDO, TokenType.MISSILE):
                 weapons.append(self.parse_weapon())
             elif self.match(TokenType.IDENTIFIER):
                 prop_name = self.consume(TokenType.IDENTIFIER).value
@@ -131,17 +134,18 @@ class Parser:
         weapon_type = self.current_token().value
         self.pos += 1
         name = self.consume(TokenType.IDENTIFIER).value
-        self.consume(TokenType.LBRACE)
 
         properties = {}
-        while not self.match(TokenType.RBRACE):
-            if self.match(TokenType.EOF):
-                self._raise_expected(self.current_token(), "RBRACE para fechar a arma")
-            prop_name = self.consume(TokenType.IDENTIFIER).value
-            prop_val = self.consume_numeric()
-            properties[prop_name] = prop_val
+        if self.match(TokenType.LBRACE):
+            self.consume(TokenType.LBRACE)
+            while not self.match(TokenType.RBRACE):
+                if self.match(TokenType.EOF):
+                    self._raise_expected(self.current_token(), "RBRACE para fechar a arma")
+                prop_name = self.consume(TokenType.IDENTIFIER).value
+                prop_val = self.consume_numeric()
+                properties[prop_name] = prop_val
+            self.consume(TokenType.RBRACE)
 
-        self.consume(TokenType.RBRACE)
         return {
             "type": "WeaponDeclaration",
             "kind": weapon_type,

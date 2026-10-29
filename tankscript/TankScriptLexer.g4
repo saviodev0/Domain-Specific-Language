@@ -2,8 +2,10 @@ lexer grammar TankScriptLexer;
 
 TANK       : 'tank';
 SUBMARINE  : 'submarine';
+AIRCRAFT   : 'aircraft';
 GUN        : 'gun';
 TORPEDO    : 'torpedo';
+MISSILE    : 'missile';
 TEAM       : 'team';
 BATTLE     : 'battle';
 MOVE       : 'move';

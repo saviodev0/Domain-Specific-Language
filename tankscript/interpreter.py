@@ -1,27 +1,32 @@
 import math
 from typing import Dict, List, Any
+from .catalogo import ARMAS, UNIDADES
 from .renderer import GridRenderer
 
 class Unit:
-    def __init__(self, name: str, kind: str, properties: Dict[str, int | float], weapons: List[Dict]):
+    def __init__(self, name: str, kind: str, weapons: List[Dict]):
+        stats = UNIDADES[kind]
         self.name = name
         self.kind = kind
-        self.hp = properties.get("hp", 100)
+        self.hp = stats["hp"]
         self.max_hp = self.hp
-        self.armor = properties.get("armor", 0)
-        self.speed = properties.get("speed", 10)
-        self.radar_range = properties.get("radar", 60)
-        self.depth = properties.get("depth", 0) if kind == "submarine" else 0
+        self.armor = stats["armor"]
+        self.speed = stats["speed"]
+        self.radar_range = stats["radar"]
+        self.depth = 0
         self.x: int | float = 0
         self.y: int | float = 0
+        # Antes do primeiro turno o posicionamento é livre; depois, cada turno libera `speed`.
+        self.movement_left = math.inf
 
-        # armas com ammo e cooldown
+        # armas com ammo e cooldown; os atributos vêm do tipo da arma
         self.weapons = []
         for w in weapons:
             w_copy = dict(w)
-            w_copy["ammo"] = w["properties"].get("ammo", 5)
+            w_copy["properties"] = dict(ARMAS[w["kind"]])
+            w_copy["ammo"] = w_copy["properties"]["ammo"]
             w_copy["cooldown"] = 0
-            w_copy["max_cooldown"] = w["properties"].get("cooldown", 1)
+            w_copy["max_cooldown"] = w_copy["properties"]["cooldown"]
             self.weapons.append(w_copy)
 
         self.exposed = False
@@ -38,6 +43,12 @@ class Unit:
 
 
 class Interpreter:
+    UNIT_KINDS = {
+        "TankDeclaration": "tank",
+        "SubmarineDeclaration": "submarine",
+        "AircraftDeclaration": "aircraft",
+    }
+
     def __init__(self, ast: Dict[str, Any], renderer: GridRenderer = None):
         self.ast = ast
         self.units: Dict[str, Unit] = {}
@@ -47,9 +58,8 @@ class Interpreter:
 
     def execute_declaration(self, decl: Dict[str, Any]):
         dtype = decl["type"]
-        if dtype in ("TankDeclaration", "SubmarineDeclaration"):
-            kind = "tank" if dtype == "TankDeclaration" else "submarine"
-            unit = Unit(decl["name"], kind, decl["properties"], decl["weapons"])
+        if dtype in self.UNIT_KINDS:
+            unit = Unit(decl["name"], self.UNIT_KINDS[dtype], decl["weapons"])
             self.units[unit.name] = unit
 
         elif dtype == "TeamDeclaration":
@@ -61,6 +71,7 @@ class Interpreter:
     def tick_cooldowns_and_effects(self):
         """Reduz cooldowns e expiração de sonar no início do turno"""
         for unit in self.units.values():
+            unit.movement_left = unit.speed
             if unit.kind == "submarine":
                 if unit.must_surface_next_turn:
                     unit.depth = 0
@@ -83,15 +94,27 @@ class Interpreter:
         if stype == "MoveStatement":
             unit = self.units.get(stmt["unit"])
             if unit and unit.is_alive():
-                # Regra de Terreno: Ilha ("I") bloqueia movimento
-                if self.renderer:
-                    terrain = self.renderer.get_terrain_at(stmt["x"], stmt["y"])
+                x, y = stmt["x"], stmt["y"]
+                dist = math.hypot(x - unit.x, y - unit.y)
+                if dist > unit.movement_left + 0.5:
+                    if unit.movement_left <= 0:
+                        print(f"[SEM MOVIMENTO] {unit.name} já andou {unit.speed} neste turno")
+                        return
+                    ratio = unit.movement_left / dist
+                    x = round(unit.x + (x - unit.x) * ratio)
+                    y = round(unit.y + (y - unit.y) * ratio)
+                    print(f"[MOVE LIMITADO] {unit.name} anda até {unit.speed} por turno e parou em ({x}, {y})")
+
+                # Regra de Terreno: Ilha ("I") bloqueia movimento, exceto de aeronaves
+                if self.renderer and unit.kind != "aircraft":
+                    terrain = self.renderer.get_terrain_at(x, y)
                     if terrain == "I":
                         print(f"[COLISÃO] {unit.name} tentou mover para uma Ilha/Montanha e foi bloqueado!")
                         return
 
-                unit.x = stmt["x"]
-                unit.y = stmt["y"]
+                unit.movement_left = max(0, unit.movement_left - math.hypot(x - unit.x, y - unit.y))
+                unit.x = x
+                unit.y = y
                 print(f"[MOVE] {unit.name} moveu para ({unit.x}, {unit.y})")
 
         elif stype == "DiveStatement":
@@ -166,8 +189,11 @@ class Interpreter:
             print(f"[FIRE ERROU] {target.name} fora do alcance!")
             return
 
-        if target.kind == "submarine" and target.depth > 0 and weapon["kind"] == "gun":
-            print(f"[FIRE INEFICAZ] Canhões não atingem submarinos submersos!")
+        if target.kind == "submarine" and target.depth > 0 and weapon["kind"] != "torpedo":
+            print("[FIRE INEFICAZ] Só torpedos atingem submarinos submersos!")
+            return
+        if target.kind == "aircraft" and weapon["kind"] == "torpedo":
+            print("[FIRE INEFICAZ] Torpedos não atingem aeronaves!")
             return
 
         # Consome Munição e aplica Cooldown
@@ -176,7 +202,7 @@ class Interpreter:
 
         # Modificador de Terreno (# Ruínas/Cobertura reduz dano em 50%)
         defense_mult = 1.0
-        if self.renderer and self.renderer.get_terrain_at(target.x, target.y) == "#":
+        if self.renderer and target.kind != "aircraft" and self.renderer.get_terrain_at(target.x, target.y) == "#":
             defense_mult = 0.5
             print(f"🛡️  [COBERTURA] {target.name} está em Ruínas/Cobertura (#) e reduz o dano em 50%!")
 

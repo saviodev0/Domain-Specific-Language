@@ -1,6 +1,6 @@
 # 🛡️ TankIO — Arena Tactical Simulator & TankScript DSL
 
-O **TankIO** é um jogo de simulação tática baseado em turnos que utiliza uma Linguagem de Domínio Específico (**DSL**) própria, chamada **TankScript**. O jogo combina elementos de estratégia por turnos, gestão de munições, névoa de guerra, utilização de terreno tático e combate entre veículos blindados e submarinos.
+O **TankIO** é um jogo de simulação tática baseado em turnos que utiliza uma Linguagem de Domínio Específico (**DSL**) própria, chamada **TankScript**. O jogo combina elementos de estratégia por turnos, gestão de munições, névoa de guerra, utilização de terreno tático e combate entre tanques, submarinos e aeronaves.
 
 ---
 
@@ -14,8 +14,9 @@ O campo de batalha é representado numa grelha bidimensional com coordenadas de 
 | :---: | :--- | :--- |
 | **`T`** | **Tanque** | Unidade terrestre blindada. |
 | **`S`** | **Submarino** | Unidade aquática (superfície ou submerso `~S~`). |
-| **`I`** | **Ilha / Montanha** | **Obstáculo Inabalável:** Bloqueia movimentação. Tentativas de atravessar geram aviso de colisão. |
-| **`#`** | **Ruínas / Cobertura** | **Posição Defensiva:** Unidades posicionadas aqui recebem **50% a menos de dano** de ataques. |
+| **`A`** | **Aeronave** | Unidade aérea: voa sobre ilhas e não se abriga em ruínas. |
+| **`I`** | **Ilha / Montanha** | **Obstáculo Inabalável:** Bloqueia tanques e submarinos. Aeronaves passam por cima. |
+| **`#`** | **Ruínas / Cobertura** | **Posição Defensiva:** Tanques e submarinos posicionados aqui recebem **50% a menos de dano** de ataques. |
 | **`~`** | **Água Rasa** | **Zona Restrita:** Submarinos em água rasa **não podem submergir** (`dive`). |
 | **`?`** | **Névoa de Guerra** | **Célula Oculta:** Áreas fora do alcance de radar das tuas unidades ou de pulso de sonar. |
 | **`.`** | **Terreno Aberto** | Solo ou água comum sem modificadores. |
@@ -32,11 +33,31 @@ O campo de batalha é representado numa grelha bidimensional com coordenadas de 
 
 ## ⚔️ 3. Regras de Combate e Mecânicas
 
+### Unidades e Armas
+
+Os atributos são fixos por tipo; declarar uma unidade só escolhe o nome e as armas (até 2, do tipo permitido).
+
+| Tipo | HP | Blindagem | Velocidade por turno | Radar | Arma |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| `tank` | 120 | 15 | 30 | 60 | `gun` |
+| `submarine` | 90 | 10 | 25 | 80 | `torpedo` |
+| `aircraft` | 70 | 5 | 60 | 100 | `missile` |
+
+| Arma | Dano | Alcance | Munição | Recarga |
+| :--- | :---: | :---: | :---: | :---: |
+| `gun` | 40 | 60 | 6 | 1 |
+| `torpedo` | 70 | 80 | 3 | 2 |
+| `missile` | 55 | 100 | 2 | 2 |
+
+### Movimento
+* Antes do primeiro turno o posicionamento é livre. Depois, cada unidade anda no máximo a sua velocidade por turno, somando todos os `move`; se o destino estiver mais longe, ela para no caminho.
+
 ### Modificadores de Dano
 * **Ataque Padrão:** $\text{Dano Real} = \text{Dano da Arma} - \text{Armadura do Alvo}$.
 * **Cobertura (`#`):** Se o alvo estiver numa cobertura, o dano final sofre redução de **50%**.
 * **Submarino Exposto (Crítico!):** Se um submarino ataca enquanto está submerso, ele é obrigado a emergir no turno seguinte, ficando no estado **EXPOSTO**. Ataques sofridos enquanto exposto causam **Dano Duplo ($2\times$)**.
-* **Imunidade Submersa:** Canhões convencionais (`gun`) **não causam dano** a submarinos submersos (`depth > 0`).
+* **Imunidade Submersa:** Só torpedos atingem submarinos submersos (`depth > 0`).
+* **Aeronaves:** Torpedos **não atingem** aeronaves.
 
 ### Munição e Cooldown
 * **Munição (`ammo`):** Cada arma possui uma quantidade limitada de tiros. Quando atinge $0$, a arma fica inoperante.
@@ -64,32 +85,15 @@ Durante a tua jogada, podes inserir os seguintes comandos interativos no termina
 O ficheiro de cenário `.tank` permite declarar unidades, equipas e ordens iniciais:
 
 ```tankscript
-# Declaração de um Tanque
+# Declaração de um Tanque com dois canhões
 tank Tiger1 {
-    hp 100
-    armor 30
-    speed 40
-    radar 70
-    gun Cannon {
-        damage 50
-        range 500
-        ammo 5
-        cooldown 1
-    }
+    gun Cannon
+    gun Reserve
 }
 
 # Declaração de um Submarino
 submarine Shark1 {
-    hp 80
-    armor 10
-    speed 25
-    radar 90
-    torpedo T1 {
-        damage 70
-        range 800
-        ammo 3
-        cooldown 2
-    }
+    torpedo T1
 }
 
 # Organização das Equipas

@@ -2,58 +2,28 @@
 
 ## 1. Finalidade
 
-TankScript é uma linguagem específica para descrever cenários de batalhas táticas entre tanques e submarinos. Um programa declara unidades, armas, equipas e ordens iniciais que o TankIO interpreta para iniciar uma partida.
+TankScript é uma linguagem específica para descrever cenários de batalhas táticas entre tanques, submarinos e aeronaves. Um programa declara unidades, armas, equipas e ordens que o TankIO interpreta. Cada tipo de unidade e de arma tem atributos fixos: declarar uma unidade cria uma instância do tipo, e o programa escolhe só o nome e as armas.
 
 ## 2. Programa completo de exemplo
 
 ```tankscript
-# Declara um tanque terrestre.
+# Declara um tanque com dois canhões. Os atributos vêm do tipo tank.
 tank Tiger1 {
-    # Define pontos de vida inteiros.
-    hp 100
-    # Define a armadura inteira.
-    armor 30
-    # Define a velocidade inteira.
-    speed 40
-    # O radar aceita valores reais.
-    radar 70.5
-    # Declara um canhão chamado Cannon.
-    gun Cannon {
-        # Define o dano inteiro do canhão.
-        damage 50
-        # Define o alcance inteiro do canhão.
-        range 500
-        # Define a munição inicial.
-        ammo 5
-        # Define a recarga em turnos.
-        cooldown 1
-    }
+    gun Cannon
+    gun Reserve
 }
-# Declara um submarino.
+# Declara um submarino com um torpedo.
 submarine Shark1 {
-    # Define os pontos de vida.
-    hp 80
-    # Define a armadura.
-    armor 10
-    # Define a velocidade.
-    speed 25
-    # Define o alcance do radar.
-    radar 90
-    # Declara um torpedo chamado T1.
-    torpedo T1 {
-        # Define o dano do torpedo.
-        damage 70
-        # Define o alcance do torpedo.
-        range 800
-        # Define a munição inicial.
-        ammo 3
-        # Define a recarga em turnos.
-        cooldown 2
-    }
+    torpedo T1
 }
-# Coloca o tanque na equipa Azul.
+# Declara uma aeronave com um míssil.
+aircraft Hawk {
+    missile Sidewinder
+}
+# Coloca o tanque e a aeronave na equipa Azul.
 team Blue {
     Tiger1
+    Hawk
 }
 # Coloca o submarino na equipa Vermelha.
 team Red {
@@ -65,11 +35,12 @@ battle War {
 }
 # Define as posições iniciais.
 move Tiger1 20 20
+move Hawk 20 60
 move Shark1 170 80
 # Define a profundidade inicial do submarino.
 dive Shark1 40
-# Executa sonar quando a condição textual for verdadeira.
-if "ready" == "ready" {
+# Executa sonar quando a condição for verdadeira.
+if Tiger1.hp > 50 {
     sonar Tiger1
 }
 ```
@@ -83,11 +54,11 @@ if "ready" == "ready" {
 
 ## 4. Comandos
 
-Declarações: `tank`, `submarine`, `gun`, `torpedo`, `team` e `battle`.
+Declarações: `tank`, `submarine`, `aircraft`, `gun`, `torpedo`, `missile`, `team` e `battle`. Uma arma é declarada só com o tipo e o nome, como `gun Cannon`.
 
 Instruções: `move unidade x y`, `attack atacante alvo`, `fire atacante arma alvo`, `dive unidade profundidade`, `surface unidade`, `sonar unidade`, `if condição { ... }` e `repeat quantidade { ... }`.
 
-Propriedades de unidades e armas são escritas como identificador seguido por número, por exemplo `hp 100` ou `radar 70.5`.
+Os atributos de unidades e armas são fixos por tipo (seção 9.2). A sintaxe ainda reconhece uma propriedade escrita como identificador seguido de número, por exemplo `hp 100`, mas a análise semântica a rejeita e informa o valor fixo do tipo.
 
 ## 5. Operadores e precedência
 
@@ -124,8 +95,8 @@ Abaixo, a mesma gramática do `.g4` em EBNF: `{ ... }` é repetição (o `*` do 
 ```ebnf
 programa    = { declaracao | instrucao }, EOF ;
 declaracao  = unidade | equipe | batalha ;
-unidade     = ("tank" | "submarine"), IDENTIFIER, "{", { propriedade | arma }, "}" ;
-arma        = ("gun" | "torpedo"), IDENTIFIER, "{", { propriedade }, "}" ;
+unidade     = ("tank" | "submarine" | "aircraft"), IDENTIFIER, "{", { propriedade | arma }, "}" ;
+arma        = ("gun" | "torpedo" | "missile"), IDENTIFIER, [ "{", { propriedade }, "}" ] ;
 propriedade = IDENTIFIER, numero ;
 equipe      = "team", IDENTIFIER, "{", { IDENTIFIER }, "}" ;
 batalha     = "battle", IDENTIFIER, "{", IDENTIFIER, "vs", IDENTIFIER, "}" ;
@@ -163,16 +134,17 @@ O parser olha **um token à frente** para decidir qual alternativa seguir. Isso 
 
 | Regra | First (o que pode começar) | Follow (o que pode vir depois) |
 |---|---|---|
-| `declaracao` | `tank` `submarine` `team` `battle` | First(`declaracao`) ∪ First(`instrucao`) ∪ {`EOF`} |
+| `declaracao` | `tank` `submarine` `aircraft` `team` `battle` | First(`declaracao`) ∪ First(`instrucao`) ∪ {`EOF`} |
 | `instrucao` | `move` `attack` `fire` `dive` `surface` `sonar` `if` `repeat` | First(`declaracao`) ∪ First(`instrucao`) ∪ {`EOF`, `}`} |
 | `bloco` | `{` | igual a Follow(`instrucao`) |
-| `propriedade` | `IDENTIFIER` | `IDENTIFIER` `gun` `torpedo` `}` |
-| `arma` | `gun` `torpedo` | `IDENTIFIER` `gun` `torpedo` `}` |
+| `propriedade` | `IDENTIFIER` | `IDENTIFIER` `gun` `torpedo` `missile` `}` |
+| `arma` | `gun` `torpedo` `missile` | `IDENTIFIER` `gun` `torpedo` `missile` `}` |
 | `comparacao` | `NUMBER` `FLOAT` `STRING` `IDENTIFIER` | `{` |
 | `primario` | `NUMBER` `FLOAT` `STRING` `IDENTIFIER` | `<` `>` `==` `{` |
 
 - Em `programa`, First(`declaracao`) e First(`instrucao`) são disjuntos: um token basta para saber se vem uma declaração ou uma instrução. A repetição termina ao ver `EOF`.
-- Dentro de `unidade`, `IDENTIFIER` indica uma `propriedade`, `gun`/`torpedo` indicam uma `arma`, e `}` encerra a repetição.
+- Dentro de `unidade`, `IDENTIFIER` indica uma `propriedade`, `gun`/`torpedo`/`missile` indicam uma `arma`, e `}` encerra a repetição.
+- Em `arma`, o bloco `{ ... }` é opcional. Depois do nome da arma, `{` abre o bloco; como `{` não está em Follow(`arma`), um token basta para decidir se o bloco existe.
 - Em `primario`, a versão anterior desta especificação tinha duas alternativas começando com `IDENTIFIER` (`acesso_propriedade` e `IDENTIFIER`), ou seja, um conflito de First. A regra foi fatorada: depois do `IDENTIFIER`, um `.` indica acesso a propriedade; qualquer token de Follow(`primario`) indica que o primário terminou.
 
 ### 8.5 Árvore sintática e AST
@@ -212,28 +184,35 @@ A tabela registra cada nome declarado e o que ele significa:
 
 | Categoria | Guarda |
 |---|---|
-| unidade | tipo (`tank` ou `submarine`) e armas, com o tipo de cada uma (`gun` ou `torpedo`) |
+| unidade | tipo (`tank`, `submarine` ou `aircraft`) e armas, com o tipo de cada uma (`gun`, `torpedo` ou `missile`) |
 | equipe | unidades que a compõem |
 | batalha | nome |
 
 A análise faz duas passagens: primeiro registra todas as declarações (unidades, depois equipes, depois batalhas) e só então verifica as instruções. Por isso uma instrução pode aparecer antes da declaração da unidade que usa, como já acontecia no interpretador, que executa as declarações antes das instruções.
 
-### 9.2 Propriedades e seus tipos
+### 9.2 Tipos de unidade e de arma
 
-| Onde | Propriedade | Tipo |
-|---|---|---|
-| `tank` e `submarine` | `hp`, `armor`, `speed` | inteiro |
-| `tank` e `submarine` | `radar` | inteiro ou real |
-| só `submarine` | `depth` | inteiro ou real |
-| `gun` e `torpedo` | `damage`, `range`, `ammo`, `cooldown` | inteiro |
+Os atributos vêm do tipo e estão em `tankscript/catalogo.py`; o interpretador, a análise semântica e a interface web leem a mesma tabela.
 
-Nas condições, `unidade.propriedade` aceita `hp`, `armor`, `speed`, `radar`, `depth`, `x` e `y`, e sempre tem tipo número.
+| Tipo | hp | armor | speed | radar | Arma que monta |
+|---|---|---|---|---|---|
+| `tank` | 120 | 15 | 30 | 60 | `gun` |
+| `submarine` | 90 | 10 | 25 | 80 | `torpedo` |
+| `aircraft` | 70 | 5 | 60 | 100 | `missile` |
+
+| Arma | damage | range | ammo | cooldown |
+|---|---|---|---|---|
+| `gun` | 40 | 60 | 6 | 1 |
+| `torpedo` | 70 | 80 | 3 | 2 |
+| `missile` | 55 | 100 | 2 | 2 |
+
+Cada unidade monta no máximo 2 armas. Nas condições, `unidade.propriedade` aceita `hp`, `armor`, `speed`, `radar`, `depth`, `x` e `y`, e sempre tem tipo número.
 
 ### 9.3 Regras
 
 **Nomes**
 
-- Unidade, equipe e batalha não podem ser declaradas duas vezes com o mesmo nome; arma e propriedade não podem se repetir dentro da mesma declaração.
+- Unidade, equipe e batalha não podem ser declaradas duas vezes com o mesmo nome; uma arma não pode se repetir dentro da mesma unidade.
 - Toda unidade usada em instrução, equipe ou condição precisa estar declarada.
 - Uma unidade aparece no máximo uma vez em uma equipe, e pertence a no máximo uma equipe.
 - A batalha só pode citar equipes declaradas, e uma equipe não enfrenta a si mesma.
@@ -242,8 +221,8 @@ Nas condições, `unidade.propriedade` aceita `hp`, `armor`, `speed`, `radar`, `
 
 **Tipos**
 
-- Propriedade fora da tabela 9.2 é erro, inclusive `depth` em tanque.
-- Propriedade inteira não aceita valor real, como `hp 10.5`.
+- Os atributos são fixos: qualquer propriedade escrita numa unidade ou arma é erro. Se o atributo existe, a mensagem informa o valor do tipo (`'hp' é fixo: todo tank tem hp 120`); se não existe, lista os atributos do tipo.
+- Cada tipo de unidade só monta a sua arma (tabela 9.2), e uma unidade tem no máximo 2 armas.
 - `<` e `>` comparam dois números; `==` compara dois valores do mesmo tipo (número com número, texto com texto).
 - Um identificador sozinho não tem valor numa condição, pois a linguagem não tem variáveis: use `unidade.propriedade`.
 
@@ -253,8 +232,17 @@ Ao contrário da análise sintática, que para no primeiro erro, a análise sem�
 
 ```text
 $ python src/semantico.py examples/invalidos_semanticos/arma_de_outra_unidade.tank
-Erro semântico: Linha 14, coluna 13: 'Falcon' não possui a arma 'T1'
+Erro semântico: Linha 8, coluna 13: 'Falcon' não possui a arma 'T1'
 1 erro(s) semântico(s)
 ```
 
 Os exemplos em `examples/invalidos_semanticos/` estão corretos léxica e sintaticamente e falham só nesta fase.
+
+### 9.5 Regras extras da arena (interface web)
+
+A interface web (`src/servidor.py`) usa a mesma análise, com regras a mais definidas em `tankscript/partida.py`:
+
+- O `cenario.tank` só declara unidades. Equipes, batalha e instruções são erro, porque o jogo monta a equipe `Jogador`, gera a frota da equipe `Inimigo` em TankScript e declara a batalha.
+- O exército custa no máximo 12 pontos: `tank` 4, `submarine` 5, `aircraft` 4, e cada arma além da primeira mais 1. O inimigo gasta o mesmo orçamento.
+- O `turno.tank` só tem instruções, e cada instrução só pode comandar unidades do jogador.
+- As coordenadas de `move` precisam estar dentro do mapa: x de 0 a 199 e y de 0 a 99.

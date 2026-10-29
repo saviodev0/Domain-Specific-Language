@@ -1,5 +1,3 @@
 # Ghost nunca foi declarado.
-tank Falcon {
-    hp 100
-}
+tank Falcon { }
 move Ghost 10 10

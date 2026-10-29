@@ -32,15 +32,17 @@ class EnemyAI:
                     "target": target.name
                 })
             else:
-                # Move-se na direção do alvo
-                step_x = 10 if target.x > unit.x else (-10 if target.x < unit.x else 0)
-                step_y = 10 if target.y > unit.y else (-10 if target.y < unit.y else 0)
-                
+                # Aproxima-se do alvo até ficar no alcance da melhor arma, andando no máximo `speed`
+                best_range = max((w["properties"]["range"] for w in unit.weapons), default=0)
+                step = min(unit.speed, max(0, dist - best_range * 0.8))
+                if dist == 0 or step == 0:
+                    continue
+
                 interpreter.execute_statement({
                     "type": "MoveStatement",
                     "unit": unit.name,
-                    "x": max(0, min(190, unit.x + step_x)),
-                    "y": max(0, min(90, unit.y + step_y))
+                    "x": max(0, min(190, round(unit.x + (target.x - unit.x) / dist * step))),
+                    "y": max(0, min(90, round(unit.y + (target.y - unit.y) / dist * step)))
                 })
 
     def _get_closest_target(self, unit, interpreter, player_units):
