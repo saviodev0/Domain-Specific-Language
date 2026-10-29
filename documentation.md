@@ -25,9 +25,10 @@ O campo de batalha é representado numa grelha bidimensional com coordenadas de 
 
 ## 🌫️ 2. Névoa de Guerra & Deteção
 
-1. **Visão Passiva (Radar):** Toda a unidade possui um raio de radar definido (`radar`). Áreas dentro do seu raio revelam o mapa em tempo real.
+1. **Visão Passiva (Radar):** Toda a unidade enxerga só **2 casas ao redor**. A equipa partilha a visão: o que uma unidade vê, todas podem atacar.
 2. **Furtividade de Submarinos:** Submarinos submersos (`depth > 0`) pertencentes à equipa inimiga ficam **totalmente invisíveis**, a menos que sejam detetados por Sonar ou tenham atacado no turno anterior.
-3. **Mecânica do Sonar:** O comando `sonar` emite um pulso que revela unidades num raio expandido ($1.5\times$) durante 2 turnos, ignorando a furtividade de submersão.
+3. **Mecânica do Sonar:** O comando `sonar` revela, durante 2 turnos, os inimigos a até 3 casas (tanque) ou 4 casas (submarino e aeronave), ignorando a furtividade de submersão. Depois a unidade espera **2 turnos** para usar o sonar de novo, e o pulso **denuncia a posição** de quem o emitiu ao inimigo até o turno seguinte.
+4. **Linha de Visão:** Só é possível disparar contra um alvo que a equipa esteja a ver (radar, sonar ou submarino exposto). Ordens contra alvos fora de vista falham com `[SEM VISÃO]`.
 
 ---
 
@@ -37,11 +38,11 @@ O campo de batalha é representado numa grelha bidimensional com coordenadas de 
 
 Os atributos são fixos por tipo; declarar uma unidade só escolhe o nome e as armas (até 2, do tipo permitido).
 
-| Tipo | HP | Blindagem | Velocidade por turno | Radar | Arma |
-| :--- | :---: | :---: | :---: | :---: | :--- |
-| `tank` | 120 | 15 | 30 | 60 | `gun` |
-| `submarine` | 90 | 10 | 25 | 80 | `torpedo` |
-| `aircraft` | 70 | 5 | 60 | 100 | `missile` |
+| Tipo | HP | Blindagem | Velocidade por turno | Visão | Sonar | Arma |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| `tank` | 120 | 15 | 30 | 2 casas | 3 casas | `gun` |
+| `submarine` | 90 | 10 | 25 | 2 casas | 4 casas | `torpedo` |
+| `aircraft` | 70 | 5 | 60 | 2 casas | 4 casas | `missile` |
 
 | Arma | Dano | Alcance | Munição | Recarga |
 | :--- | :---: | :---: | :---: | :---: |
@@ -58,6 +59,10 @@ Os atributos são fixos por tipo; declarar uma unidade só escolhe o nome e as a
 * **Submarino Exposto (Crítico!):** Se um submarino ataca enquanto está submerso, ele é obrigado a emergir no turno seguinte, ficando no estado **EXPOSTO**. Ataques sofridos enquanto exposto causam **Dano Duplo ($2\times$)**.
 * **Imunidade Submersa:** Só torpedos atingem submarinos submersos (`depth > 0`).
 * **Aeronaves:** Torpedos **não atingem** aeronaves.
+
+### IA inimiga
+* A IA só enxerga o que as suas unidades alcançam, com as mesmas regras de visão e sonar do jogador. Quando perde o jogador de vista, estima onde ele pode estar com um mapa de calor por simulação de Monte Carlo, adaptado do projeto [battleships_ai](https://github.com/DataSnaek/battleships_ai), de DataSnaek (licença MIT), e usa o sonar quando a região provável está ao alcance.
+* Com o alvo à vista, concentra o fogo na unidade mais fácil de destruir, só usa armas que funcionam contra ela, recua quando tem alcance maior e mergulha os submarinos quando não estão atirando.
 
 ### Munição e Cooldown
 * **Munição (`ammo`):** Cada arma possui uma quantidade limitada de tiros. Quando atinge $0$, a arma fica inoperante.

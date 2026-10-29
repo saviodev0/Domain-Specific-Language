@@ -64,7 +64,7 @@ def test_declarations_may_appear_after_their_use():
         ("aircraft Hawk { gun G }", "aircraft não monta gun; use missile"),
         ("submarine Orca { missile M }", "submarine não monta missile; use torpedo"),
         ("tank Beta { hp 200 }", "'hp' é fixo: todo tank tem hp 120"),
-        ("aircraft Hawk { radar 1 }", "'radar' é fixo: todo aircraft tem radar 100"),
+        ("aircraft Hawk { radar 1 }", "'radar' é fixo: todo aircraft tem radar 20"),
         ("tank Beta { armr 1 }", "'armr' não é atributo de tank"),
         ("submarine Orca { depth 10 }", "'depth' não é atributo de submarine"),
         ("tank Beta { gun G { damage 99 } }", "'damage' é fixo: todo gun tem damage 40"),
@@ -128,7 +128,7 @@ def test_delivery_has_three_semantically_invalid_programs():
 
 
 def test_radar_is_readable_in_conditions():
-    source = "tank Alpha { } if Alpha.radar > 50 { move Alpha 5 5 }"
+    source = "tank Alpha { } if Alpha.radar > 10 { move Alpha 5 5 }"
     analisar(source)
     interpreter = Interpreter(Parser(Lexer(source).tokenize()).parse())
     for declaration in interpreter.ast["declarations"]:

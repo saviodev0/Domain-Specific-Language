@@ -93,14 +93,14 @@ cena.montarMapa(mapa);
 /* ---------- manual ---------- */
 
 function montarManual() {
-  for (const [classe, valor] of [["m-orcamento", catalogo.orcamento], ["m-extra", catalogo.custo_de_arma_extra], ["m-maximo", catalogo.maximo_de_armas]]) {
+  for (const [classe, valor] of [["m-orcamento", catalogo.orcamento], ["m-extra", catalogo.custo_de_arma_extra], ["m-maximo", catalogo.maximo_de_armas], ["m-recarga-sonar", catalogo.recarga_do_sonar]]) {
     for (const elemento of document.getElementsByClassName(classe)) elemento.textContent = valor;
   }
   $("#manual-unidades").innerHTML = `
-    <thead><tr><th>Tipo</th><th>Custo</th><th>HP</th><th>Blindagem</th><th>Velocidade</th><th>Radar</th><th>Arma</th><th>Especial</th></tr></thead>
+    <thead><tr><th>Tipo</th><th>Custo</th><th>HP</th><th>Blindagem</th><th>Velocidade</th><th>Visão</th><th>Sonar</th><th>Arma</th><th>Especial</th></tr></thead>
     <tbody>${Object.entries(catalogo.unidades).map(([tipo, u]) => `
       <tr><td><code>${tipo}</code> <small>${NOMES_DOS_TIPOS[tipo] || ""}</small></td><td>${u.custo}</td><td>${u.hp}</td><td>${u.armor}</td>
-      <td>${u.speed}</td><td>${u.radar}</td><td><code>${u.armas.join(", ")}</code></td><td>${ESPECIAIS[tipo] || ""}</td></tr>`).join("")}
+      <td>${u.speed}</td><td>${u.radar / 10} casas</td><td>${u.sonar / 10} casas</td><td><code>${u.armas.join(", ")}</code></td><td>${ESPECIAIS[tipo] || ""}</td></tr>`).join("")}
     </tbody>`;
   $("#manual-armas").innerHTML = `
     <thead><tr><th>Arma</th><th>Dano</th><th>Alcance</th><th>Munição</th><th>Recarga</th></tr></thead>
@@ -212,6 +212,7 @@ function atualizarUnidades(estado) {
       u.profundidade > 0 && `submerso ${u.profundidade}m`,
       u.exposto && "exposto · dano 2×",
       u.detectado && u.lado !== "jogador" && "detectado",
+      u.detectado && u.lado === "jogador" && u.vivo && "posição revelada",
     ].filter(Boolean);
     const proporcao = u.hp_max ? Math.max(0, Math.min(1, u.hp / u.hp_max)) : 0;
     const armas = oculto ? "" : u.armas.map((arma) => `
@@ -223,7 +224,9 @@ function atualizarUnidades(estado) {
       </li>`).join("");
     const numeros = oculto
       ? "sem contato: posição e HP desconhecidos"
-      : `HP ${u.hp}/${u.hp_max} · (${u.x}, ${u.y}) · blindagem ${u.armadura}${u.lado === "jogador" && u.vivo ? ` · movimento ${u.movimento}/${u.velocidade}` : ""}`;
+      : `HP ${u.hp}/${u.hp_max} · (${u.x}, ${u.y}) · blindagem ${u.armadura}${u.lado === "jogador" && u.vivo
+        ? ` · movimento ${u.movimento}/${u.velocidade} · sonar ${u.sonar_recarga ? `recarga ${u.sonar_recarga}` : "pronto"}`
+        : ""}`;
     return `
       <article class="cartao ${u.lado} ${u.vivo ? "" : "morto"} ${oculto ? "oculto" : ""}">
         <header>

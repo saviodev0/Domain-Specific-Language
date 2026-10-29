@@ -275,6 +275,8 @@ class Partida:
                     "hp_max": unidade.max_hp,
                     "armadura": unidade.armor,
                     "radar": unidade.radar_range,
+                    "sonar": unidade.sonar_range,
+                    "sonar_recarga": unidade.sonar_cooldown,
                     "velocidade": unidade.speed,
                     "movimento": unidade.speed if math.isinf(unidade.movement_left) else round(unidade.movement_left),
                     "profundidade": unidade.depth,

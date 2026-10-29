@@ -1,10 +1,11 @@
 """Atributos fixos de cada tipo de unidade e de arma. Declarar uma unidade só cria uma instância
 do tipo: o programa escolhe o nome e as armas, nunca os números."""
 
+# radar e sonar em unidades do mapa: cada célula tem 10, então radar 20 enxerga 2 casas ao redor.
 UNIDADES = {
-    "tank": {"hp": 120, "armor": 15, "speed": 30, "radar": 60, "custo": 4, "armas": ("gun",)},
-    "submarine": {"hp": 90, "armor": 10, "speed": 25, "radar": 80, "custo": 5, "armas": ("torpedo",)},
-    "aircraft": {"hp": 70, "armor": 5, "speed": 60, "radar": 100, "custo": 4, "armas": ("missile",)},
+    "tank": {"hp": 120, "armor": 15, "speed": 30, "radar": 20, "sonar": 30, "custo": 4, "armas": ("gun",)},
+    "submarine": {"hp": 90, "armor": 10, "speed": 25, "radar": 20, "sonar": 40, "custo": 5, "armas": ("torpedo",)},
+    "aircraft": {"hp": 70, "armor": 5, "speed": 60, "radar": 20, "sonar": 40, "custo": 4, "armas": ("missile",)},
 }
 
 ARMAS = {
@@ -16,7 +17,8 @@ ARMAS = {
 ATRIBUTOS = ("hp", "armor", "speed", "radar")
 MAXIMO_DE_ARMAS = 2
 CUSTO_DE_ARMA_EXTRA = 1
-ORCAMENTO = 12
+ORCAMENTO = 20
+RECARGA_DO_SONAR = 2
 
 
 def custo(tipo: str, quantidade_de_armas: int) -> int:
@@ -30,4 +32,5 @@ def descrever() -> dict:
         "maximo_de_armas": MAXIMO_DE_ARMAS,
         "custo_de_arma_extra": CUSTO_DE_ARMA_EXTRA,
         "orcamento": ORCAMENTO,
+        "recarga_do_sonar": RECARGA_DO_SONAR,
     }

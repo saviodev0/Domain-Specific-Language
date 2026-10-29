@@ -141,7 +141,7 @@ def test_units_get_the_fixed_attributes_of_their_type():
     unidades = {u["nome"]: u for u in partida.estado()["unidades"]}
 
     assert (unidades["T"]["hp"], unidades["T"]["armadura"], unidades["T"]["velocidade"]) == (120, 15, 30)
-    assert (unidades["A"]["hp"], unidades["A"]["radar"]) == (70, 100)
+    assert (unidades["A"]["hp"], unidades["A"]["radar"], unidades["A"]["sonar"]) == (70, 20, 40)
     assert unidades["S"]["armas"][0] == {
         "nome": "P", "tipo": "torpedo", "dano": 70, "alcance": 80, "municao": 3, "recarga": 0,
     }
@@ -199,7 +199,7 @@ def test_enemy_names_never_clash_with_the_player():
     ("codigo", "mensagem"),
     [
         ("", "Linha 1, coluna 1: declare pelo menos uma unidade"),
-        ("tank A { } tank B { } tank C { } tank D { }", "Linha 1, coluna 34: orçamento estourado: o exército chega a 16 de 12 pontos"),
+        ("tank A { } tank B { } tank C { } tank D { } tank E { } tank F { }", "Linha 1, coluna 56: orçamento estourado: o exército chega a 24 de 20 pontos"),
         ("tank A { }\nmove A 1 1", "Linha 2, coluna 1: o cenário só monta o exército"),
         ("tank A { }\nteam X { A }", "Linha 2, coluna 1: na arena você só declara unidades"),
         ("tank A { hp 999 }", "'hp' é fixo: todo tank tem hp 120"),
@@ -274,3 +274,28 @@ def test_server_reports_errors_and_serves_the_page(servidor):
 
     with urllib.request.urlopen(f"{servidor}/") as resposta:
         assert b"phaser" in resposta.read()
+
+
+def test_units_only_fire_at_what_their_team_sees():
+    partida = Partida("tank Rex { gun G } tank Brutus { gun G } team A { Rex } team B { Brutus } "
+                      "move Rex 10 50 move Brutus 60 50")
+
+    eventos = partida.jogar_turno("fire Rex G Brutus")
+
+    assert "[SEM VISÃO] Rex não enxerga Brutus; aproxime-se ou use o sonar" in [m for e in eventos for m in e["mensagens"]]
+    assert partida.interpretador.units["Brutus"].hp == 120
+
+
+def test_sonar_reveals_enemies_recharges_and_gives_away_the_emitter():
+    partida = Partida("tank Rex { gun G } tank Aliado { } tank Brutus { gun G } team A { Rex Aliado } team B { Brutus } "
+                      "move Rex 10 50 move Aliado 20 50 move Brutus 40 50")
+
+    eventos = partida.jogar_turno("sonar Rex\nfire Rex G Brutus\nsonar Rex")
+    mensagens = [m for e in eventos if e["origem"] == "jogador" for m in e["mensagens"]]
+
+    assert "   -> [PING] Unidade detectada: Brutus na posição (40, 50)!".strip() in mensagens
+    assert not any("Aliado na posição" in m for m in mensagens)
+    assert any(m.startswith("[FIRE SUCESSO] Rex usou G em Brutus") for m in mensagens)
+    assert "[SONAR RECARREGANDO] Rex só pode usar o sonar de novo em 2 turno(s)" in mensagens
+    rex = next(u for u in eventos[-1]["estado"]["unidades"] if u["nome"] == "Rex")
+    assert rex["detectado"] is True

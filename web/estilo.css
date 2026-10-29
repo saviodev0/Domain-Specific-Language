@@ -1,18 +1,18 @@
 :root {
-  --fundo: #070d18;
-  --painel: #0d1626;
-  --painel-2: #111d33;
-  --borda: #1d2b45;
-  --texto: #dbe7ff;
-  --suave: #7d90b3;
-  --destaque: #38e1ff;
-  --jogador: #4cc9f0;
-  --inimigo: #ff5d6c;
-  --alerta: #ffb84d;
-  --sucesso: #5ef38c;
+  --fundo: #f4f1ea;
+  --painel: #ffffff;
+  --painel-2: #faf8f3;
+  --borda: #ddd6c6;
+  --texto: #1f2328;
+  --suave: #6b6558;
+  --destaque: #2563eb;
+  --jogador: #1d4ed8;
+  --inimigo: #dc2626;
+  --alerta: #b45309;
+  --sucesso: #15803d;
   --titulo: "Chakra Petch", system-ui, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, monospace;
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 * {
@@ -27,7 +27,7 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 70% -10%, rgba(56, 225, 255, 0.08), transparent 45%),
+    radial-gradient(circle at 70% -10%, rgba(37, 99, 235, 0.06), transparent 45%),
     var(--fundo);
   color: var(--texto);
   font: 14px/1.45 system-ui, sans-serif;
@@ -62,7 +62,7 @@ button:disabled {
   gap: 12px 24px;
   padding: 12px 20px;
   border-bottom: 1px solid var(--borda);
-  background: rgba(7, 13, 24, 0.85);
+  background: rgba(244, 241, 234, 0.9);
   position: sticky;
   top: 0;
   z-index: 5;
@@ -122,17 +122,17 @@ button:disabled {
 
 #fase[data-fase="executando"] {
   color: var(--alerta);
-  border-color: rgba(255, 184, 77, 0.4);
+  border-color: rgba(180, 83, 9, 0.35);
 }
 
 #fase[data-fase="turnos"] {
   color: var(--sucesso);
-  border-color: rgba(94, 243, 140, 0.4);
+  border-color: rgba(21, 128, 61, 0.35);
 }
 
 #fase[data-fase="fim"] {
   color: var(--destaque);
-  border-color: rgba(56, 225, 255, 0.4);
+  border-color: rgba(37, 99, 235, 0.35);
 }
 
 .azul {
@@ -163,7 +163,7 @@ button:disabled {
 }
 
 .velocidade button.ativo {
-  background: rgba(56, 225, 255, 0.15);
+  background: rgba(37, 99, 235, 0.1);
   color: var(--destaque);
 }
 
@@ -256,17 +256,17 @@ button:disabled {
 }
 
 .cm-s-tank.CodeMirror {
-  background: #08111f;
-  color: #c9d6ee;
+  background: #fbfaf6;
+  color: #1f2328;
 }
 
 .cm-s-tank .CodeMirror-gutters {
-  background: #0a1424;
+  background: #f4f1ea;
   border-right: 1px solid var(--borda);
 }
 
 .cm-s-tank .CodeMirror-linenumber {
-  color: #3f5276;
+  color: #a39d8e;
 }
 
 .cm-s-tank .CodeMirror-cursor {
@@ -275,19 +275,19 @@ button:disabled {
 
 .cm-s-tank .CodeMirror-selected,
 .cm-s-tank.CodeMirror-focused .CodeMirror-selected {
-  background: rgba(56, 225, 255, 0.18);
+  background: rgba(37, 99, 235, 0.14);
 }
 
-.cm-s-tank .cm-comment { color: #56698d; font-style: italic; }
-.cm-s-tank .cm-string { color: #f5c26b; }
-.cm-s-tank .cm-keyword { color: #c792ea; font-weight: 600; }
-.cm-s-tank .cm-builtin { color: #38e1ff; font-weight: 600; }
-.cm-s-tank .cm-atom { color: #ff9e64; font-weight: 600; }
-.cm-s-tank .cm-attribute { color: #7fdbca; }
-.cm-s-tank .cm-number { color: #f78c6c; }
-.cm-s-tank .cm-operator { color: #89ddff; }
-.cm-s-tank .cm-bracket { color: #7d90b3; }
-.cm-s-tank .cm-variable { color: #e3ecff; }
+.cm-s-tank .cm-comment { color: #8a8475; font-style: italic; }
+.cm-s-tank .cm-string { color: #b45309; }
+.cm-s-tank .cm-keyword { color: #7c3aed; font-weight: 600; }
+.cm-s-tank .cm-builtin { color: #2563eb; font-weight: 600; }
+.cm-s-tank .cm-atom { color: #c2410c; font-weight: 600; }
+.cm-s-tank .cm-attribute { color: #0f766e; }
+.cm-s-tank .cm-number { color: #9a3412; }
+.cm-s-tank .cm-operator { color: #0369a1; }
+.cm-s-tank .cm-bracket { color: #8a8475; }
+.cm-s-tank .cm-variable { color: #1f2328; }
 
 .erros-gutter,
 .CodeMirror-gutter.erros {
@@ -302,7 +302,7 @@ button:disabled {
 }
 
 .linha-erro {
-  background: rgba(255, 93, 108, 0.1);
+  background: rgba(220, 38, 38, 0.08);
 }
 
 .erro-trecho {
@@ -311,7 +311,7 @@ button:disabled {
 }
 
 .linha-executando {
-  background: rgba(56, 225, 255, 0.16);
+  background: rgba(37, 99, 235, 0.12);
   box-shadow: inset 3px 0 0 var(--destaque);
 }
 
@@ -340,9 +340,9 @@ button:disabled {
   flex: 1;
   justify-content: center;
   border: 1px solid transparent;
-  background: linear-gradient(180deg, #38e1ff, #1fb3d6);
-  color: #04121c;
-  box-shadow: 0 6px 20px -8px rgba(56, 225, 255, 0.7);
+  background: linear-gradient(180deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 6px 20px -8px rgba(37, 99, 235, 0.45);
 }
 
 .primario::before {
@@ -369,7 +369,7 @@ button:disabled {
 kbd {
   padding: 1px 5px;
   border-radius: 4px;
-  background: rgba(4, 18, 28, 0.18);
+  background: rgba(255, 255, 255, 0.22);
   font: 600 11px var(--mono);
 }
 
@@ -385,10 +385,10 @@ kbd {
 
 .erros li {
   padding: 8px 10px;
-  border: 1px solid rgba(255, 93, 108, 0.35);
+  border: 1px solid rgba(220, 38, 38, 0.3);
   border-left: 3px solid var(--inimigo);
   border-radius: 8px;
-  background: rgba(255, 93, 108, 0.08);
+  background: rgba(220, 38, 38, 0.06);
   font: 12.5px/1.45 var(--mono);
   cursor: pointer;
 }
@@ -415,7 +415,7 @@ kbd {
   letter-spacing: 0;
   font-weight: 500;
   margin-left: 6px;
-  color: #4f6286;
+  color: #a39d8e;
 }
 
 .trechos {
@@ -437,7 +437,7 @@ kbd {
 }
 
 .trecho:hover {
-  border-color: rgba(56, 225, 255, 0.5);
+  border-color: rgba(37, 99, 235, 0.45);
 }
 
 .trecho b {
@@ -454,7 +454,7 @@ kbd {
 }
 
 .CodeMirror-placeholder {
-  color: #4f6286 !important;
+  color: #a39d8e !important;
   font-style: italic;
 }
 
@@ -483,7 +483,7 @@ kbd {
   height: 8px;
   margin: 8px 0;
   border-radius: 99px;
-  background: #0a1220;
+  background: #ece7dc;
   overflow: hidden;
 }
 
@@ -491,7 +491,7 @@ kbd {
   width: 0;
   height: 100%;
   border-radius: 99px;
-  background: linear-gradient(90deg, #1fb3d6, var(--destaque));
+  background: linear-gradient(90deg, #60a5fa, var(--destaque));
   transition: width 0.3s ease;
 }
 
@@ -526,8 +526,8 @@ kbd {
   padding: 4px;
   border: 1px solid var(--borda);
   border-radius: 8px;
-  background: #0b1424;
-  box-shadow: 0 14px 40px -12px rgba(0, 0, 0, 0.8);
+  background: #ffffff;
+  box-shadow: 0 14px 40px -12px rgba(31, 35, 40, 0.18);
   font: 12.5px var(--mono);
   max-height: 260px;
 }
@@ -543,7 +543,7 @@ kbd {
 }
 
 li.CodeMirror-hint-active {
-  background: rgba(56, 225, 255, 0.18);
+  background: rgba(37, 99, 235, 0.14);
   color: var(--texto);
 }
 
@@ -567,7 +567,7 @@ li.CodeMirror-hint-active {
   border-radius: 16px;
   background: var(--painel);
   color: var(--texto);
-  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.85);
+  box-shadow: 0 30px 80px -20px rgba(31, 35, 40, 0.25);
 }
 
 .manual[open] {
@@ -576,7 +576,7 @@ li.CodeMirror-hint-active {
 }
 
 .manual::backdrop {
-  background: rgba(3, 7, 15, 0.72);
+  background: rgba(31, 35, 40, 0.35);
   backdrop-filter: blur(3px);
 }
 
@@ -622,7 +622,7 @@ li.CodeMirror-hint-active {
 
 .manual section {
   padding: 14px 0;
-  border-bottom: 1px solid rgba(29, 43, 69, 0.6);
+  border-bottom: 1px solid rgba(221, 214, 198, 0.8);
 }
 
 .manual section:last-child {
@@ -645,13 +645,13 @@ li.CodeMirror-hint-active {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: rgba(56, 225, 255, 0.15);
+  background: rgba(37, 99, 235, 0.1);
   font-size: 13px;
 }
 
 .manual p,
 .manual li {
-  color: #c2cfe6;
+  color: #3d3a33;
   max-width: 75ch;
 }
 
@@ -663,7 +663,7 @@ li.CodeMirror-hint-active {
 .manual pre {
   font-family: var(--mono);
   font-size: 12.5px;
-  color: #e3ecff;
+  color: #1f2328;
 }
 
 .manual pre {
@@ -671,7 +671,7 @@ li.CodeMirror-hint-active {
   padding: 10px 12px;
   border: 1px solid var(--borda);
   border-radius: 8px;
-  background: #08111f;
+  background: #fbfaf6;
   overflow: auto;
 }
 
@@ -748,10 +748,10 @@ li.CodeMirror-hint-active {
 
 .amostra.jogador { background: var(--jogador); }
 .amostra.inimigo { background: var(--inimigo); }
-.amostra.ilha { background: #4f8a4b; box-shadow: inset 0 0 0 2px #c8ad72; border-radius: 50%; }
-.amostra.ruinas { background: #5b6579; }
-.amostra.agua { background: #0f3a52; box-shadow: inset 0 0 0 1px #2b89a8; }
-.amostra.nevoa { background: #03070f; box-shadow: inset 0 0 0 1px var(--borda); }
+.amostra.ilha { background: #6a994e; box-shadow: inset 0 0 0 2px #d9c48f; border-radius: 50%; }
+.amostra.ruinas { background: #8b8f99; }
+.amostra.agua { background: #9cc7d9; box-shadow: inset 0 0 0 1px #5b9db8; }
+.amostra.nevoa { background: #a8a294; box-shadow: inset 0 0 0 1px var(--borda); }
 
 .legenda .dica {
   margin-left: auto;
@@ -824,7 +824,7 @@ li.CodeMirror-hint-active {
   height: 6px;
   margin: 8px 0 6px;
   border-radius: 99px;
-  background: #0a1220;
+  background: #ece7dc;
   overflow: hidden;
 }
 
@@ -835,7 +835,7 @@ li.CodeMirror-hint-active {
 }
 
 .vida .alta { background: var(--sucesso); }
-.vida .media { background: #ffc857; }
+.vida .media { background: #d97706; }
 .vida .baixa { background: var(--inimigo); }
 
 .numeros {
@@ -854,7 +854,7 @@ li.CodeMirror-hint-active {
 .etiquetas span {
   padding: 1px 7px;
   border-radius: 99px;
-  background: rgba(255, 184, 77, 0.12);
+  background: rgba(180, 83, 9, 0.1);
   color: var(--alerta);
   font-size: 11.5px;
 }
@@ -906,7 +906,7 @@ li.CodeMirror-hint-active {
   display: flex;
   gap: 8px;
   padding: 3px 0;
-  border-bottom: 1px solid rgba(29, 43, 69, 0.5);
+  border-bottom: 1px solid rgba(221, 214, 198, 0.8);
 }
 
 .registro .origem {
@@ -960,7 +960,7 @@ li.CodeMirror-hint-active {
   display: grid;
   place-items: center;
   padding: 16px;
-  background: rgba(3, 7, 15, 0.7);
+  background: rgba(31, 35, 40, 0.35);
   backdrop-filter: blur(3px);
 }
 
@@ -975,7 +975,7 @@ li.CodeMirror-hint-active {
   border-radius: 16px;
   background: var(--painel);
   text-align: center;
-  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 30px 80px -20px rgba(31, 35, 40, 0.18);
 }
 
 .fim-caixa h2 {

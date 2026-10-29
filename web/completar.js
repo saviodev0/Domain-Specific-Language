@@ -2,7 +2,7 @@ const ATRIBUTOS_CONSULTAVEIS = [
   ["hp", "pontos de vida"],
   ["armor", "blindagem"],
   ["speed", "velocidade por turno"],
-  ["radar", "alcance do radar"],
+  ["radar", "alcance da visão"],
   ["depth", "profundidade (submarino)"],
   ["x", "posição horizontal"],
   ["y", "posição vertical"],
@@ -14,7 +14,7 @@ const COMANDOS = [
   ["attack", "attack unidade alvo", "dispara a primeira arma"],
   ["dive", "dive submarino profundidade", "submerge"],
   ["surface", "surface submarino", "emerge"],
-  ["sonar", "sonar unidade", "revela unidades próximas"],
+  ["sonar", "sonar unidade", "revela inimigos a 3–4 casas"],
   ["if", "if unidade.hp < 50 { … }", "executa se for verdade"],
   ["repeat", "repeat 2 { … }", "repete o bloco"],
 ];
@@ -136,7 +136,9 @@ function sugestoesDoTurno(tokens, unidades) {
     case "surface":
       return argumentos.length === 0 ? nomes(minhas.filter((u) => u.tipo === "submarine")) : [];
     case "sonar":
-      return argumentos.length === 0 ? nomes(minhas) : [];
+      return argumentos.length === 0
+        ? minhas.map((u) => item(`${u.nome} `, u.nome, u.sonar_recarga ? `sonar em recarga: ${u.sonar_recarga} turno(s)` : `sonar pronto · ${u.sonar / 10} casas`))
+        : [];
     case "if":
       if (argumentos.length === 0) return [...minhas, ...inimigas].map((u) => item(`${u.nome}.`, u.nome, descrever(u)));
       if (argumentos.length === 1) return [["<", "menor que"], [">", "maior que"], ["==", "igual a"]].map(([op, dica]) => item(`${op} `, op, dica));

@@ -1,6 +1,6 @@
 import math
 from typing import Dict, List, Any
-from .catalogo import ARMAS, UNIDADES
+from .catalogo import ARMAS, RECARGA_DO_SONAR, UNIDADES
 from .renderer import GridRenderer
 
 class Unit:
@@ -13,6 +13,8 @@ class Unit:
         self.armor = stats["armor"]
         self.speed = stats["speed"]
         self.radar_range = stats["radar"]
+        self.sonar_range = stats["sonar"]
+        self.sonar_cooldown = 0
         self.depth = 0
         self.x: int | float = 0
         self.y: int | float = 0
@@ -83,6 +85,8 @@ class Interpreter:
 
             if unit.sonar_ping_turns > 0:
                 unit.sonar_ping_turns -= 1
+            if unit.sonar_cooldown > 0:
+                unit.sonar_cooldown -= 1
 
             for w in unit.weapons:
                 if w["cooldown"] > 0:
@@ -137,13 +141,23 @@ class Interpreter:
         elif stype == "SonarStatement":
             unit = self.units.get(stmt["unit"])
             if unit and unit.is_alive():
+                if unit.sonar_cooldown > 0:
+                    print(f"[SONAR RECARREGANDO] {unit.name} só pode usar o sonar de novo em {unit.sonar_cooldown} turno(s)")
+                    return
                 print(f"📡 [SONAR ATIVADO] {unit.name} emitiu um pulso de radar/sonar!")
+                unit.sonar_cooldown = RECARGA_DO_SONAR
+                # o pulso denuncia quem o emitiu até o próximo turno
+                unit.sonar_ping_turns = max(unit.sonar_ping_turns, 1)
+                print(f"   -> [RUÍDO] O pulso revelou a posição de {unit.name} ao inimigo!")
+                reach = unit.sonar_range // 10
+                ux, uy = self._cell(unit)
                 for target in self.units.values():
-                    if target.name != unit.name and target.is_alive():
-                        dist = math.sqrt((target.x - unit.x)**2 + (target.y - unit.y)**2)
-                        if dist <= unit.radar_range * 1.5:
-                            target.sonar_ping_turns = 2
-                            print(f"   -> [PING] Unidade detectada: {target.name} na posição ({target.x}, {target.y})!")
+                    if target.name == unit.name or not target.is_alive() or self._same_team(unit, target):
+                        continue
+                    tx, ty = self._cell(target)
+                    if max(abs(tx - ux), abs(ty - uy)) <= reach:
+                        target.sonar_ping_turns = 2
+                        print(f"   -> [PING] Unidade detectada: {target.name} na posição ({target.x}, {target.y})!")
 
         elif stype == "FireStatement":
             self.handle_fire(stmt["attacker"], stmt["weapon"], stmt["target"])
@@ -163,12 +177,36 @@ class Interpreter:
                 for inner in stmt["body"]:
                     self.execute_statement(inner)
 
+    def _cell(self, unit: Unit) -> tuple:
+        if self.renderer:
+            return self.renderer.cell_of(unit.x, unit.y)
+        return int(unit.x // 10), int(unit.y // 10)
+
+    def _team_of(self, name: str):
+        return next((team for team, members in self.teams.items() if name in members), None)
+
+    def _same_team(self, a: Unit, b: Unit) -> bool:
+        team = self._team_of(a.name)
+        return team is not None and team == self._team_of(b.name)
+
+    def _can_see(self, observer: Unit, target: Unit) -> bool:
+        """Uma unidade só mira no que alguém da sua equipe enxerga: radar, sonar ou alvo exposto."""
+        team = self._team_of(observer.name)
+        if self.renderer is None or team is None or self._same_team(observer, target):
+            return True
+        cells = self.renderer.visible_cells(self.units, self.teams[team])
+        return self.renderer.is_shown(target, False, cells)
+
     def handle_fire(self, attacker_name: str, weapon_name: str, target_name: str):
         attacker = self.units.get(attacker_name)
         target = self.units.get(target_name)
 
         if not attacker or not attacker.is_alive() or not target or not target.is_alive():
             print("[FIRE FALHOU] Unidade inválida ou destruída.")
+            return
+
+        if not self._can_see(attacker, target):
+            print(f"[SEM VISÃO] {attacker.name} não enxerga {target.name}; aproxime-se ou use o sonar")
             return
 
         weapon = next((w for w in attacker.weapons if w["name"] == weapon_name), None)

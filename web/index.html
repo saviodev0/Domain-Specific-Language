@@ -122,7 +122,7 @@ aircraft Hawk { missile Ferrao }</code></pre>
               <tr><td><code>fire Rex Canhao Brutus</code></td><td>Dispara uma arma específica no alvo.</td></tr>
               <tr><td><code>attack Rex Brutus</code></td><td>Dispara a primeira arma da unidade.</td></tr>
               <tr><td><code>dive Orca 30</code> / <code>surface Orca</code></td><td>Submerge ou emerge um submarino.</td></tr>
-              <tr><td><code>sonar Rex</code></td><td>Revela, por 2 turnos, unidades num raio de 1,5× o radar, inclusive submarinos submersos.</td></tr>
+              <tr><td><code>sonar Rex</code></td><td>Revela, por 2 turnos, os inimigos a até 3 casas (tanque) ou 4 casas (submarino e aeronave), inclusive submarinos submersos. Depois a unidade espera <b class="m-recarga-sonar">2</b> turnos para usar de novo, e o pulso <b>revela a posição dela</b> ao inimigo até o próximo turno.</td></tr>
               <tr><td><code>if Rex.hp &lt; 50 { … }</code></td><td>Executa o bloco se a comparação for verdadeira. Dá para ler <code>hp</code>, <code>armor</code>, <code>speed</code>, <code>radar</code>, <code>depth</code>, <code>x</code> e <code>y</code> de qualquer unidade, com <code>&lt;</code>, <code>&gt;</code> e <code>==</code>.</td></tr>
               <tr><td><code>repeat 3 { … }</code></td><td>Repete o bloco. Cada execução tem limite de 500 instruções.</td></tr>
             </tbody>
@@ -133,6 +133,7 @@ aircraft Hawk { missile Ferrao }</code></pre>
       <section>
         <h3><span class="passo">3</span> Regras de combate</h3>
         <ul>
+          <li>Só dá para atirar em quem a sua equipe está vendo, pela visão de 2 casas de qualquer unidade ou pelo sonar. Atirar às cegas pelo nome não funciona.</li>
           <li>Dano causado = dano da arma − blindagem do alvo (no mínimo 1). O alvo precisa estar dentro do alcance, medido em linha reta.</li>
           <li>Depois de disparar, a arma espera a recarga (em turnos) e gasta uma munição. Sem munição, ela para de funcionar.</li>
           <li><b>Ruínas</b> cortam pela metade o dano recebido por tanques e submarinos. Aeronaves não se abrigam.</li>
@@ -144,7 +145,7 @@ aircraft Hawk { missile Ferrao }</code></pre>
 
       <section>
         <h3><span class="passo">4</span> Mapa e névoa de guerra</h3>
-        <p>O mapa vai de 0 a 199 em x e de 0 a 99 em y; cada célula tem 10 de lado. Você enxerga só o que está no radar das suas unidades. Passe o mouse no mapa para ver as coordenadas e clique numa célula para inseri-las no editor. Clicar no nome de uma unidade ou arma também insere o nome.</p>
+        <p>O mapa vai de 0 a 199 em x e de 0 a 99 em y; cada célula tem 10 de lado. Cada unidade enxerga só 2 casas ao redor, e a IA também: ela não vê através da névoa. Quando perde você de vista, ela calcula onde você provavelmente está e vai procurar lá, usando sonar. Mudar de posição e se esconder funciona. Passe o mouse no mapa para ver as coordenadas e clique numa célula para inseri-las no editor. Clicar no nome de uma unidade ou arma também insere o nome.</p>
         <p>Enquanto você digita, o editor sugere o próximo pedaço do comando: tipos e armas no cenário; unidades, armas, alvos, coordenadas e atributos no turno. Use as setas e <kbd>Enter</kbd> ou <kbd>Tab</kbd> para aceitar, ou <kbd>Ctrl</kbd> + <kbd>Espaço</kbd> para abrir as sugestões.</p>
         <p>Erros de digitação, de sintaxe e de regras aparecem sublinhados na linha do editor. <kbd>Ctrl</kbd> + <kbd>Enter</kbd> executa a aba aberta.</p>
       </section>

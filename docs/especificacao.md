@@ -194,11 +194,13 @@ A análise faz duas passagens: primeiro registra todas as declarações (unidade
 
 Os atributos vêm do tipo e estão em `tankscript/catalogo.py`; o interpretador, a análise semântica e a interface web leem a mesma tabela.
 
-| Tipo | hp | armor | speed | radar | Arma que monta |
-|---|---|---|---|---|---|
-| `tank` | 120 | 15 | 30 | 60 | `gun` |
-| `submarine` | 90 | 10 | 25 | 80 | `torpedo` |
-| `aircraft` | 70 | 5 | 60 | 100 | `missile` |
+| Tipo | hp | armor | speed | radar | sonar | Arma que monta |
+|---|---|---|---|---|---|---|
+| `tank` | 120 | 15 | 30 | 20 | 30 | `gun` |
+| `submarine` | 90 | 10 | 25 | 20 | 40 | `torpedo` |
+| `aircraft` | 70 | 5 | 60 | 20 | 40 | `missile` |
+
+`radar` e `sonar` estão em unidades do mapa, em que cada célula mede 10: toda unidade enxerga 2 casas ao redor, e o sonar alcança 3 ou 4 casas. O alcance do sonar não é um atributo consultável, porque `sonar` é palavra reservada.
 
 | Arma | damage | range | ammo | cooldown |
 |---|---|---|---|---|
@@ -243,6 +245,6 @@ Os exemplos em `examples/invalidos_semanticos/` estão corretos léxica e sintat
 A interface web (`src/servidor.py`) usa a mesma análise, com regras a mais definidas em `tankscript/partida.py`:
 
 - O `cenario.tank` só declara unidades. Equipes, batalha e instruções são erro, porque o jogo monta a equipe `Jogador`, gera a frota da equipe `Inimigo` em TankScript e declara a batalha.
-- O exército custa no máximo 12 pontos: `tank` 4, `submarine` 5, `aircraft` 4, e cada arma além da primeira mais 1. O inimigo gasta o mesmo orçamento.
+- O exército custa no máximo 20 pontos: `tank` 4, `submarine` 5, `aircraft` 4, e cada arma além da primeira mais 1. O inimigo gasta o mesmo orçamento.
 - O `turno.tank` só tem instruções, e cada instrução só pode comandar unidades do jogador.
 - As coordenadas de `move` precisam estar dentro do mapa: x de 0 a 199 e y de 0 a 99.
