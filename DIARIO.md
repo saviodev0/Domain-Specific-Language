@@ -33,3 +33,15 @@
 - A análise encontrou um erro real em `examples/quadrado.tank`: a batalha citava a equipe `Red`, que não existia. Adicionamos a equipe e um submarino.
 - Corrigimos o interpretador: `unidade.radar` em condições sempre valia 0, porque o atributo interno se chama `radar_range`.
 - O `main.py` agora executa as análises léxica, sintática e semântica antes de iniciar o jogo. Criamos `src/semantico.py`, três exemplos em `examples/invalidos_semanticos/` e `tests/test_semantico.py`.
+
+## 2026-10-29 (interface web)
+
+- Criamos uma interface web com Phaser 3 no estilo dos jogos de programação: o jogador escreve TankScript num editor, executa e acompanha as unidades no mapa. O Python continua sendo o motor; o navegador só desenha.
+- `tankscript/partida.py` reaproveita as análises da E4 (com regras extras: limites do mapa e, no turno, só comandos para a própria equipe) e registra um evento com a linha do código e o estado do jogo a cada instrução executada. O editor destaca a linha em execução e marca os erros na posição informada pelas análises.
+- `src/servidor.py` usa só a biblioteca padrão (`http.server`): serve a pasta `web/` e as rotas `/api/partidas` e `/api/partidas/<id>/turnos`.
+- O `GridRenderer` passou a expor `visible_cells` e `is_shown`, usados pelo terminal e pela web; com isso, unidades reveladas por sonar fora do radar também aparecem no mapa ASCII.
+- Adicionamos `tests/test_partida.py`, com testes da partida e do servidor HTTP.
+- Os tipos passaram a ter atributos fixos, definidos em `tankscript/catalogo.py`: declarar uma unidade só cria uma instância e escolhe as armas. Entraram o tipo `aircraft` e a arma `missile`. A sintaxe ainda reconhece propriedades, mas a análise semântica as rejeita informando o valor do tipo; cada tipo só monta a sua arma, até 2 por unidade.
+- No interpretador, cada unidade anda no máximo a sua velocidade por turno, aeronaves passam por ilhas e não se abrigam em ruínas, torpedos não atingem aeronaves e só torpedos atingem submarinos submersos. A IA se aproxima até o alcance da sua arma.
+- A interface web virou uma arena: o jogador começa com o editor vazio e monta o exército com 12 pontos, o jogo gera a frota inimiga em TankScript com o mesmo orçamento, e um manual explica tipos, comandos e regras.
+- O editor ganhou autocompletar por contexto (`web/completar.js`): no cenário sugere tipos e armas permitidas; no turno sugere comandos, unidades do jogador, armas da unidade, alvos inimigos, coordenadas e atributos depois do `.`.

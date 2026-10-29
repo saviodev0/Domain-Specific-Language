@@ -12,4 +12,6 @@ RUN pip install --no-cache-dir -r requirements.txt -r requirements-antlr.txt
 COPY . /app
 RUN sh gerar.sh
 
+EXPOSE 8000
+
 CMD ["python", "-u", "main.py"]

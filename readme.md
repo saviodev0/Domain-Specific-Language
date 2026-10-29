@@ -10,7 +10,7 @@ O projeto implementa as fases de um compilador/interpretador (lexer, parser, ár
 
 ## Funcionalidades
 
-- **Linguagem própria (`.tank`):** declaração de unidades, armas, equipes, condições (`if`) e repetições (`repeat`).
+- **Linguagem própria (`.tank`):** declaração de tanques, submarinos e aeronaves com atributos fixos por tipo, armas, equipes, condições (`if`) e repetições (`repeat`).
 - **Névoa de guerra e sonar:** cada unidade tem raio de visão. O comando `sonar` revela unidades ocultas e submersas.
 - **Terrenos:**
   - `I` (ilha): bloqueia o movimento.
@@ -18,20 +18,22 @@ O projeto implementa as fases de um compilador/interpretador (lexer, parser, ár
   - `~` (água rasa): impede a submersão de submarinos.
 - **Gerenciamento tático:** munição (`ammo`), tempo de recarga (`cooldown`) e estados especiais dos submarinos.
 - **Modo interativo com IA:** partida por turnos contra um adversário controlado pelo computador.
+- **Interface web com Phaser:** escreva o programa de cada turno num editor e veja as unidades executarem as ordens no mapa, com a linha em execução destacada.
 
 ## A linguagem
 
 ```tankscript
-# Define o tanque e suas propriedades.
+# Cada tipo tem atributos fixos; o programa escolhe o nome e as armas.
 tank Falcon {
-    hp 100
-    armor 20
-    speed 35
-    radar 60.5
+    gun Cannon
+}
+aircraft Hawk {
+    missile Sidewinder
 }
 
-# Define a posição inicial.
+# Define as posições iniciais.
 move Falcon 20 20
+move Hawk 20 60
 ```
 
 O cenário completo está em `examples/espiral.tank`. A sintaxe, a gramática e as decisões da linguagem estão em [docs/especificacao.md](docs/especificacao.md).
@@ -55,7 +57,11 @@ arquivo .tank
      ▼
  Interpreter                                regras de movimento, dano e colisão
      ├──▶ GridRenderer                      grade ASCII e névoa de guerra
-     └──▶ EnemyAI                           ações do adversário
+     ├──▶ EnemyAI                           ações do adversário
+     └──▶ Partida (tankscript/partida.py)   eventos por instrução para a interface web
+               │
+               ▼
+          src/servidor.py ──▶ web/ (Phaser + editor)
 ```
 
 Os dois parsers reconhecem a mesma linguagem; os testes conferem que aceitam e rejeitam os mesmos programas. O jogo só inicia se o cenário passar pelas análises léxica, sintática e semântica. O código ANTLR é gerado em `gerado/`, que não é versionado.
@@ -94,6 +100,30 @@ $antlr4 = Join-Path $scripts "antlr4.exe"
 New-Item -ItemType Directory -Force gerado | Out-Null
 & $antlr4 -Dlanguage=Python3 -visitor -Xexact-output-dir -o gerado -lib gerado tankscript\TankScriptLexer.g4 tankscript\TankScriptParser.g4
 ```
+
+### Interface web
+
+Com o código ANTLR já gerado:
+
+```sh
+python src/servidor.py
+```
+
+Abra http://localhost:8000 (use `--porta` para outra porta). No Docker, publique a porta e escute em todas as interfaces:
+
+```sh
+docker run --rm -p 8000:8000 tankio python -u src/servidor.py --host 0.0.0.0
+```
+
+Como jogar:
+
+1. O editor começa vazio e o **Manual** abre na primeira visita, com as tabelas de tipos, armas e regras.
+2. Na aba `cenario.tank`, monte o seu exército com até 12 pontos, por exemplo `tank Rex { gun Canhao }`, e clique em **Iniciar batalha** (ou `Ctrl+Enter`). O jogo gera uma frota inimiga com o mesmo orçamento e a IA a comanda.
+3. Na aba `turno.tank`, escreva as ordens do turno. Elas podem usar `if` e `repeat`, mas só podem comandar as suas unidades. O mesmo programa pode ser executado turno após turno, e **Automático** repete o turno até a batalha terminar.
+4. Clique numa célula do mapa para inserir as coordenadas no editor, e no nome de uma unidade ou arma para inserir o nome.
+5. Enquanto você digita, o editor sugere o próximo pedaço do comando (tipos e armas no cenário; unidades, armas, alvos, coordenadas e atributos no turno). `Ctrl+Espaço` abre as sugestões.
+
+Erros léxicos, sintáticos e semânticos aparecem marcados na linha e coluna do editor. O Phaser, o CodeMirror e as fontes são carregados de CDN, então o navegador precisa de acesso à internet.
 
 ## Ferramentas de linha de comando
 
@@ -142,7 +172,7 @@ python -m pip install -r requirements-dev.txt
 python -m pytest
 ```
 
-Para rodar apenas os testes do parser e da gramática, use `python -m pytest tests/test_parser.py`; para a análise semântica, `python -m pytest tests/test_semantico.py`.
+Para rodar apenas os testes do parser e da gramática, use `python -m pytest tests/test_parser.py`; para a análise semântica, `python -m pytest tests/test_semantico.py`; para a partida e o servidor web, `python -m pytest tests/test_partida.py`.
 
 ## Documentação
 

@@ -1,0 +1,1041 @@
+:root {
+  --fundo: #070d18;
+  --painel: #0d1626;
+  --painel-2: #111d33;
+  --borda: #1d2b45;
+  --texto: #dbe7ff;
+  --suave: #7d90b3;
+  --destaque: #38e1ff;
+  --jogador: #4cc9f0;
+  --inimigo: #ff5d6c;
+  --alerta: #ffb84d;
+  --sucesso: #5ef38c;
+  --titulo: "Chakra Petch", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 70% -10%, rgba(56, 225, 255, 0.08), transparent 45%),
+    var(--fundo);
+  color: var(--texto);
+  font: 14px/1.45 system-ui, sans-serif;
+}
+
+button,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+:focus-visible {
+  outline: 2px solid var(--destaque);
+  outline-offset: 2px;
+}
+
+/* ---------- topo ---------- */
+
+.topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--borda);
+  background: rgba(7, 13, 24, 0.85);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  backdrop-filter: blur(6px);
+}
+
+.marca {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--titulo);
+}
+
+.marca strong {
+  font-size: 22px;
+  letter-spacing: 0.08em;
+}
+
+.marca em {
+  font-style: normal;
+  color: var(--destaque);
+}
+
+.marca small {
+  color: var(--suave);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.logo {
+  width: 14px;
+  height: 14px;
+  align-self: center;
+  background: var(--destaque);
+  transform: rotate(45deg);
+  box-shadow: 0 0 12px var(--destaque);
+}
+
+.situacao {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-right: auto;
+}
+
+.chip {
+  padding: 3px 10px;
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  background: var(--painel);
+  font-family: var(--titulo);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+#fase[data-fase="executando"] {
+  color: var(--alerta);
+  border-color: rgba(255, 184, 77, 0.4);
+}
+
+#fase[data-fase="turnos"] {
+  color: var(--sucesso);
+  border-color: rgba(94, 243, 140, 0.4);
+}
+
+#fase[data-fase="fim"] {
+  color: var(--destaque);
+  border-color: rgba(56, 225, 255, 0.4);
+}
+
+.azul {
+  color: var(--jogador);
+}
+
+.vermelho {
+  color: var(--inimigo);
+}
+
+.velocidade {
+  display: inline-flex;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.velocidade button {
+  padding: 5px 10px;
+  border: 0;
+  background: var(--painel);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.velocidade button + button {
+  border-left: 1px solid var(--borda);
+}
+
+.velocidade button.ativo {
+  background: rgba(56, 225, 255, 0.15);
+  color: var(--destaque);
+}
+
+/* ---------- layout ---------- */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(340px, 5fr) 8fr;
+  gap: 16px;
+  padding: 16px 20px 24px;
+  align-items: start;
+}
+
+.painel {
+  background: var(--painel);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  padding: 14px;
+  min-width: 0;
+}
+
+.painel h2 {
+  margin: 0 0 10px;
+  font: 600 13px var(--titulo);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--suave);
+}
+
+.arena-coluna {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.inferior {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ---------- editor ---------- */
+
+.editor-painel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: sticky;
+  top: 72px;
+}
+
+.abas {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.aba {
+  padding: 6px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--suave);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.aba.ativa {
+  border-color: var(--borda);
+  background: var(--painel-2);
+  color: var(--texto);
+}
+
+
+.explicacao {
+  margin: 0;
+  color: var(--suave);
+  font-size: 13px;
+}
+
+.editor {
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.editor .CodeMirror {
+  height: min(52vh, 520px);
+  font: 13.5px/1.6 var(--mono);
+}
+
+.cm-s-tank.CodeMirror {
+  background: #08111f;
+  color: #c9d6ee;
+}
+
+.cm-s-tank .CodeMirror-gutters {
+  background: #0a1424;
+  border-right: 1px solid var(--borda);
+}
+
+.cm-s-tank .CodeMirror-linenumber {
+  color: #3f5276;
+}
+
+.cm-s-tank .CodeMirror-cursor {
+  border-left: 2px solid var(--destaque);
+}
+
+.cm-s-tank .CodeMirror-selected,
+.cm-s-tank.CodeMirror-focused .CodeMirror-selected {
+  background: rgba(56, 225, 255, 0.18);
+}
+
+.cm-s-tank .cm-comment { color: #56698d; font-style: italic; }
+.cm-s-tank .cm-string { color: #f5c26b; }
+.cm-s-tank .cm-keyword { color: #c792ea; font-weight: 600; }
+.cm-s-tank .cm-builtin { color: #38e1ff; font-weight: 600; }
+.cm-s-tank .cm-atom { color: #ff9e64; font-weight: 600; }
+.cm-s-tank .cm-attribute { color: #7fdbca; }
+.cm-s-tank .cm-number { color: #f78c6c; }
+.cm-s-tank .cm-operator { color: #89ddff; }
+.cm-s-tank .cm-bracket { color: #7d90b3; }
+.cm-s-tank .cm-variable { color: #e3ecff; }
+
+.erros-gutter,
+.CodeMirror-gutter.erros {
+  width: 14px;
+}
+
+.marcador-erro {
+  color: var(--inimigo);
+  font-size: 11px;
+  padding-left: 3px;
+  cursor: help;
+}
+
+.linha-erro {
+  background: rgba(255, 93, 108, 0.1);
+}
+
+.erro-trecho {
+  text-decoration: underline wavy var(--inimigo);
+  text-underline-offset: 3px;
+}
+
+.linha-executando {
+  background: rgba(56, 225, 255, 0.16);
+  box-shadow: inset 3px 0 0 var(--destaque);
+}
+
+.CodeMirror.executando .CodeMirror-cursors {
+  display: none;
+}
+
+.acoes {
+  display: flex;
+  gap: 8px;
+}
+
+.primario,
+.secundario {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 9px;
+  font-family: var(--titulo);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.primario {
+  flex: 1;
+  justify-content: center;
+  border: 1px solid transparent;
+  background: linear-gradient(180deg, #38e1ff, #1fb3d6);
+  color: #04121c;
+  box-shadow: 0 6px 20px -8px rgba(56, 225, 255, 0.7);
+}
+
+.primario::before {
+  content: "";
+  border-left: 9px solid currentColor;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+}
+
+.primario:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.secundario {
+  border: 1px solid var(--borda);
+  background: var(--painel-2);
+}
+
+.secundario.ativo {
+  border-color: var(--alerta);
+  color: var(--alerta);
+}
+
+kbd {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(4, 18, 28, 0.18);
+  font: 600 11px var(--mono);
+}
+
+.erros {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  max-height: 160px;
+  overflow: auto;
+}
+
+.erros li {
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 93, 108, 0.35);
+  border-left: 3px solid var(--inimigo);
+  border-radius: 8px;
+  background: rgba(255, 93, 108, 0.08);
+  font: 12.5px/1.45 var(--mono);
+  cursor: pointer;
+}
+
+.fase-erro {
+  display: inline-block;
+  margin-right: 6px;
+  color: var(--inimigo);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.referencia summary {
+  cursor: pointer;
+  font: 600 13px var(--titulo);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--suave);
+}
+
+.referencia summary small {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+  margin-left: 6px;
+  color: #4f6286;
+}
+
+.trechos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.trecho {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  padding: 7px 9px;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  background: var(--painel-2);
+  min-width: 0;
+}
+
+.trecho:hover {
+  border-color: rgba(56, 225, 255, 0.5);
+}
+
+.trecho b {
+  font: 600 12px var(--mono);
+  color: var(--destaque);
+}
+
+.trecho code {
+  font: 11.5px var(--mono);
+  color: var(--suave);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.CodeMirror-placeholder {
+  color: #4f6286 !important;
+  font-style: italic;
+}
+
+.orcamento {
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  background: var(--painel-2);
+}
+
+.orcamento-topo {
+  display: flex;
+  justify-content: space-between;
+  font: 600 13px var(--titulo);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--suave);
+}
+
+.orcamento-topo b {
+  color: var(--destaque);
+  font-family: var(--mono);
+}
+
+.orcamento-barra {
+  height: 8px;
+  margin: 8px 0;
+  border-radius: 99px;
+  background: #0a1220;
+  overflow: hidden;
+}
+
+.orcamento-barra div {
+  width: 0;
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #1fb3d6, var(--destaque));
+  transition: width 0.3s ease;
+}
+
+.orcamento.estourado .orcamento-topo b {
+  color: var(--inimigo);
+}
+
+.orcamento.estourado .orcamento-barra div {
+  background: var(--inimigo);
+}
+
+.exercito {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 3px;
+  font: 12px var(--mono);
+  color: var(--suave);
+}
+
+.exercito b {
+  color: var(--jogador);
+}
+
+.exercito .problema {
+  color: var(--inimigo);
+}
+
+.CodeMirror-hints {
+  z-index: 30;
+  padding: 4px;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  background: #0b1424;
+  box-shadow: 0 14px 40px -12px rgba(0, 0, 0, 0.8);
+  font: 12.5px var(--mono);
+  max-height: 260px;
+}
+
+.CodeMirror-hint {
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-radius: 5px;
+  color: var(--texto);
+  white-space: nowrap;
+}
+
+li.CodeMirror-hint-active {
+  background: rgba(56, 225, 255, 0.18);
+  color: var(--texto);
+}
+
+.sugestao-nome {
+  font-weight: 600;
+  color: var(--destaque);
+}
+
+.sugestao-dica {
+  color: var(--suave);
+  font-size: 11.5px;
+}
+
+/* ---------- manual ---------- */
+
+.manual {
+  width: min(860px, calc(100% - 32px));
+  max-height: calc(100vh - 48px);
+  padding: 0;
+  border: 1px solid var(--borda);
+  border-radius: 16px;
+  background: var(--painel);
+  color: var(--texto);
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.85);
+}
+
+.manual[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.manual::backdrop {
+  background: rgba(3, 7, 15, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.manual > header,
+.manual > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.manual > footer {
+  justify-content: flex-end;
+  border-top: 1px solid var(--borda);
+  border-bottom: 0;
+}
+
+.manual > footer .primario {
+  flex: none;
+}
+
+.manual h2 {
+  margin: 0;
+  font: 700 22px var(--titulo);
+  letter-spacing: 0.06em;
+}
+
+.fechar {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  background: var(--painel-2);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.manual-corpo {
+  overflow: auto;
+  padding: 4px 22px 18px;
+}
+
+.manual section {
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(29, 43, 69, 0.6);
+}
+
+.manual section:last-child {
+  border-bottom: 0;
+}
+
+.manual h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 8px;
+  font: 700 16px var(--titulo);
+  letter-spacing: 0.04em;
+  color: var(--destaque);
+}
+
+.passo {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(56, 225, 255, 0.15);
+  font-size: 13px;
+}
+
+.manual p,
+.manual li {
+  color: #c2cfe6;
+  max-width: 75ch;
+}
+
+.manual ul {
+  padding-left: 20px;
+}
+
+.manual code,
+.manual pre {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: #e3ecff;
+}
+
+.manual pre {
+  margin: 10px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  background: #08111f;
+  overflow: auto;
+}
+
+.tabela-rolagem {
+  overflow-x: auto;
+  margin: 10px 0;
+}
+
+.manual table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.manual th,
+.manual td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--borda);
+  text-align: left;
+  vertical-align: top;
+}
+
+.manual th {
+  font: 600 12px var(--titulo);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--suave);
+}
+
+.manual td small {
+  color: var(--suave);
+}
+
+/* ---------- arena ---------- */
+
+.arena-painel {
+  padding: 10px;
+}
+
+.arena {
+  width: 100%;
+  aspect-ratio: 1150 / 590;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--fundo);
+}
+
+.arena canvas {
+  display: block;
+}
+
+.legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: center;
+  margin-top: 8px;
+  color: var(--suave);
+  font-size: 12px;
+}
+
+.legenda span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.amostra {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.amostra.jogador { background: var(--jogador); }
+.amostra.inimigo { background: var(--inimigo); }
+.amostra.ilha { background: #4f8a4b; box-shadow: inset 0 0 0 2px #c8ad72; border-radius: 50%; }
+.amostra.ruinas { background: #5b6579; }
+.amostra.agua { background: #0f3a52; box-shadow: inset 0 0 0 1px #2b89a8; }
+.amostra.nevoa { background: #03070f; box-shadow: inset 0 0 0 1px var(--borda); }
+
+.legenda .dica {
+  margin-left: auto;
+  font-family: var(--mono);
+  color: var(--texto);
+}
+
+/* ---------- unidades ---------- */
+
+.unidades {
+  display: grid;
+  gap: 8px;
+  max-height: 340px;
+  overflow: auto;
+}
+
+.vazio {
+  margin: 0;
+  color: var(--suave);
+}
+
+.cartao {
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-left: 3px solid var(--suave);
+  border-radius: 9px;
+  background: var(--painel-2);
+}
+
+.cartao.jogador { border-left-color: var(--jogador); }
+.cartao.inimigo { border-left-color: var(--inimigo); }
+.cartao.morto { opacity: 0.55; }
+.cartao.oculto { opacity: 0.7; border-style: dashed; }
+
+.cartao header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.inserir {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--mono);
+  font-weight: 600;
+}
+
+.inserir:hover {
+  color: var(--destaque);
+  text-decoration: underline;
+}
+
+.cartao .nome {
+  font-size: 14px;
+}
+
+.cartao.jogador .nome { color: var(--jogador); }
+.cartao.inimigo .nome { color: var(--inimigo); }
+
+.tipo {
+  font: 600 11px var(--titulo);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--suave);
+}
+
+.vida {
+  height: 6px;
+  margin: 8px 0 6px;
+  border-radius: 99px;
+  background: #0a1220;
+  overflow: hidden;
+}
+
+.vida div {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.vida .alta { background: var(--sucesso); }
+.vida .media { background: #ffc857; }
+.vida .baixa { background: var(--inimigo); }
+
+.numeros {
+  margin: 0;
+  font: 12px var(--mono);
+  color: var(--suave);
+}
+
+.etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0 0;
+}
+
+.etiquetas span {
+  padding: 1px 7px;
+  border-radius: 99px;
+  background: rgba(255, 184, 77, 0.12);
+  color: var(--alerta);
+  font-size: 11.5px;
+}
+
+.armas {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 3px;
+  font-size: 12px;
+  color: var(--suave);
+}
+
+.armas li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: baseline;
+}
+
+.armas .inserir {
+  color: var(--texto);
+  font-size: 12px;
+}
+
+.municao {
+  color: var(--alerta);
+  letter-spacing: 1px;
+  font-size: 10px;
+}
+
+.recarga {
+  color: var(--inimigo);
+}
+
+/* ---------- registro ---------- */
+
+.registro {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 340px;
+  overflow: auto;
+  font: 12px/1.5 var(--mono);
+}
+
+.registro li {
+  display: flex;
+  gap: 8px;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(29, 43, 69, 0.5);
+}
+
+.registro .origem {
+  flex: none;
+  width: 58px;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 10.5px;
+  padding-top: 1px;
+}
+
+.registro .texto {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.registro .linha {
+  flex: none;
+  padding: 0 5px;
+  border: 1px solid var(--borda);
+  border-radius: 4px;
+  background: none;
+  color: var(--suave);
+  font-size: 10.5px;
+  height: fit-content;
+}
+
+.registro .cenario .origem { color: var(--suave); }
+.registro .jogador .origem { color: var(--jogador); }
+.registro .ia .origem { color: var(--inimigo); }
+.registro .sistema .origem { color: var(--alerta); }
+
+.registro .turno-titulo {
+  margin-top: 6px;
+  color: var(--destaque);
+  font: 700 13px var(--titulo);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.registro .turno-titulo .origem {
+  display: none;
+}
+
+/* ---------- fim de jogo ---------- */
+
+.fim {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(3, 7, 15, 0.7);
+  backdrop-filter: blur(3px);
+}
+
+.fim[hidden] {
+  display: none;
+}
+
+.fim-caixa {
+  width: min(420px, 100%);
+  padding: 28px;
+  border: 1px solid var(--borda);
+  border-radius: 16px;
+  background: var(--painel);
+  text-align: center;
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.8);
+}
+
+.fim-caixa h2 {
+  margin: 0;
+  font: 700 40px var(--titulo);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.fim[data-resultado="vitoria"] h2 { color: var(--sucesso); }
+.fim[data-resultado="derrota"] h2 { color: var(--inimigo); }
+
+.fim-caixa p {
+  color: var(--suave);
+}
+
+.fim-acoes {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.fim-acoes .primario {
+  flex: none;
+}
+
+.fim-acoes .primario::before {
+  display: none;
+}
+
+/* ---------- telas menores ---------- */
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-painel {
+    position: static;
+    order: 2;
+  }
+
+  .arena-coluna {
+    order: 1;
+  }
+}
+
+@media (max-width: 700px) {
+  .topo,
+  .layout {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .inferior {
+    grid-template-columns: 1fr;
+  }
+
+  .legenda .dica {
+    margin-left: 0;
+    width: 100%;
+  }
+}
