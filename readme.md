@@ -176,7 +176,7 @@ Para rodar apenas os testes do parser e da gramática, use `python -m pytest tes
 
 ## Créditos
 
-A busca da IA inimiga por unidades escondidas na névoa de guerra adapta a estratégia de mapa de calor por simulação de Monte Carlo do projeto [battleships_ai](https://github.com/DataSnaek/battleships_ai), de **DataSnaek** (licença MIT, © 2018 DataSnaek). Não copiamos o código: lá a IA de batalha naval sorteia posições possíveis para os navios restantes e ataca a casa mais provável; aqui, a IA sorteia onde cada unidade do jogador pode estar desde a última vez que foi vista e vai para a região mais provável. A explicação completa está no início de `tankscript/ai.py`.
+A busca da IA inimiga por unidades escondidas na névoa de guerra adapta a estratégia de mapa de calor por simulação de Monte Carlo do projeto [battleships_ai](https://github.com/mitchelljy/battleships_ai), de **DataSnaek** (hoje **mitchelljy** no GitHub; licença MIT, © 2018 DataSnaek). Não copiamos o código: lá a IA de batalha naval sorteia posições possíveis para os navios restantes e ataca a casa mais provável; aqui, a IA sorteia onde cada unidade do jogador pode estar desde a última vez que foi vista e vai para a região mais provável. A explicação completa está no início de `tankscript/ai.py`.
 
 ## Documentação
 

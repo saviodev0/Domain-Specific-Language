@@ -61,7 +61,7 @@ Os atributos são fixos por tipo; declarar uma unidade só escolhe o nome e as a
 * **Aeronaves:** Torpedos **não atingem** aeronaves.
 
 ### IA inimiga
-* A IA só enxerga o que as suas unidades alcançam, com as mesmas regras de visão e sonar do jogador. Quando perde o jogador de vista, estima onde ele pode estar com um mapa de calor por simulação de Monte Carlo, adaptado do projeto [battleships_ai](https://github.com/DataSnaek/battleships_ai), de DataSnaek (licença MIT), e usa o sonar quando a região provável está ao alcance.
+* A IA só enxerga o que as suas unidades alcançam, com as mesmas regras de visão e sonar do jogador. Quando perde o jogador de vista, estima onde ele pode estar com um mapa de calor por simulação de Monte Carlo, adaptado do projeto [battleships_ai](https://github.com/mitchelljy/battleships_ai), de DataSnaek (hoje mitchelljy no GitHub; licença MIT), e usa o sonar quando a região provável está ao alcance.
 * Com o alvo à vista, concentra o fogo na unidade mais fácil de destruir, só usa armas que funcionam contra ela, recua quando tem alcance maior e mergulha os submarinos quando não estão atirando.
 
 ### Munição e Cooldown

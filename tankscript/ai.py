@@ -1,10 +1,11 @@
 """IA da equipe inimiga.
 
 A IA só enxerga o que o radar das suas unidades alcança. Para procurar unidades escondidas na névoa,
-ela adapta o mapa de calor por simulação de Monte Carlo do projeto battleships_ai, de DataSnaek
-(https://github.com/DataSnaek/battleships_ai, licença MIT): lá, a IA de batalha naval sorteia muitas
-posições possíveis para os navios restantes, descarta as que contradizem os tiros na água, soma tudo
-num mapa de frequências e ataca a casa mais provável. Aqui, cada unidade do jogador que sumiu é
+ela adapta o mapa de calor por simulação de Monte Carlo do projeto battleships_ai, de DataSnaek,
+hoje mitchelljy no GitHub (https://github.com/mitchelljy/battleships_ai, licença MIT,
+© 2018 DataSnaek): lá, a IA de batalha naval sorteia muitas posições possíveis para os navios
+restantes, descarta as que contradizem os tiros na água, soma tudo num mapa de frequências e ataca
+a casa mais provável. Aqui, cada unidade do jogador que sumiu é
 sorteada a partir da última posição vista e da distância que pode ter andado; as células que o radar
 vê sem encontrá-la fazem o papel dos tiros na água.
 
