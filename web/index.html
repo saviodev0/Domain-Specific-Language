@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TankIO · Arena TankScript</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="marca">
+      <span class="logo" aria-hidden="true"></span>
+      <strong>TANK<em>IO</em></strong>
+      <small>Arena TankScript</small>
+    </div>
+    <div class="situacao">
+      <span class="chip" id="fase">Planejamento</span>
+      <span class="chip" id="turno">Turno —</span>
+      <span class="chip lado" id="lados" hidden></span>
+    </div>
+    <div class="controles">
+      <button type="button" id="abrir-manual" class="secundario">Manual</button>
+      <div class="velocidade" role="group" aria-label="Velocidade das animações">
+        <button type="button" data-velocidade="0.5">0,5×</button>
+        <button type="button" data-velocidade="1" class="ativo">1×</button>
+        <button type="button" data-velocidade="2">2×</button>
+        <button type="button" data-velocidade="4">4×</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="painel editor-painel" aria-label="Editor TankScript">
+      <div class="abas" role="tablist">
+        <button type="button" class="aba ativa" data-aba="cenario" role="tab">cenario.tank</button>
+        <button type="button" class="aba" data-aba="turno" role="tab" disabled>turno.tank</button>
+      </div>
+      <p class="explicacao" id="explicacao"></p>
+      <div id="editor" class="editor"></div>
+      <div id="orcamento" class="orcamento" aria-live="polite">
+        <div class="orcamento-topo">
+          <span>Orçamento do exército</span>
+          <b id="orcamento-valor">0 / 12</b>
+        </div>
+        <div class="orcamento-barra"><div id="orcamento-preenchido"></div></div>
+        <ul id="exercito" class="exercito"></ul>
+      </div>
+      <div class="acoes">
+        <button type="button" id="executar" class="primario">
+          <span id="executar-rotulo">Iniciar batalha</span>
+          <kbd>Ctrl</kbd><kbd>Enter</kbd>
+        </button>
+        <button type="button" id="automatico" class="secundario" hidden>Automático</button>
+      </div>
+      <ul id="erros" class="erros" hidden></ul>
+      <details class="referencia" open>
+        <summary>Comandos <small>clique para inserir · Ctrl+Espaço sugere</small></summary>
+        <div id="trechos" class="trechos"></div>
+      </details>
+    </section>
+
+    <section class="arena-coluna">
+      <div class="painel arena-painel">
+        <div id="arena" class="arena"></div>
+        <div class="legenda" aria-label="Legenda do mapa">
+          <span><i class="amostra jogador"></i>sua equipe</span>
+          <span><i class="amostra inimigo"></i>inimigo</span>
+          <span><i class="amostra ilha"></i>ilha</span>
+          <span><i class="amostra ruinas"></i>ruínas</span>
+          <span><i class="amostra agua"></i>água rasa</span>
+          <span><i class="amostra nevoa"></i>névoa</span>
+          <span id="dica" class="dica">Passe o mouse no mapa; clique para inserir as coordenadas.</span>
+        </div>
+      </div>
+      <div class="inferior">
+        <div class="painel">
+          <h2>Unidades</h2>
+          <div id="unidades" class="unidades"><p class="vazio">Inicie a batalha para ver as unidades.</p></div>
+        </div>
+        <div class="painel">
+          <h2>Registro</h2>
+          <ol id="registro" class="registro"></ol>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="manual" class="manual" aria-labelledby="manual-titulo">
+    <header>
+      <h2 id="manual-titulo">Manual do TankIO</h2>
+      <button type="button" class="fechar" data-fechar-manual aria-label="Fechar o manual">×</button>
+    </header>
+    <div class="manual-corpo">
+      <section>
+        <h3>Objetivo</h3>
+        <p>Monte um exército, programe as ordens dele em TankScript e destrua a frota inimiga. O jogo monta o inimigo com o mesmo orçamento que você e a IA o comanda.</p>
+      </section>
+
+      <section>
+        <h3><span class="passo">1</span> Monte o exército no <code>cenario.tank</code></h3>
+        <p>Cada unidade é uma instância de um tipo: você escolhe só o <b>nome</b> e as <b>armas</b>. Vida, blindagem, velocidade, radar e os números das armas vêm do tipo e não podem ser alterados.</p>
+        <pre><code>tank Rex { gun Canhao gun Reserva }
+aircraft Hawk { missile Ferrao }</code></pre>
+        <p>Você tem <b class="m-orcamento">12</b> pontos. A primeira arma vem com a unidade; cada arma extra custa <b class="m-extra">1</b> ponto, até <b class="m-maximo">2</b> armas por unidade. Cada tipo só monta a sua arma.</p>
+        <div class="tabela-rolagem"><table id="manual-unidades"></table></div>
+        <div class="tabela-rolagem"><table id="manual-armas"></table></div>
+      </section>
+
+      <section>
+        <h3><span class="passo">2</span> Programe o turno no <code>turno.tank</code></h3>
+        <p>O programa do turno roda inteiro uma vez por turno e só pode comandar as suas unidades. Depois dele, a IA joga. Você pode reaproveitar o mesmo programa em todos os turnos; o botão <b>Automático</b> faz isso até a batalha acabar.</p>
+        <div class="tabela-rolagem">
+          <table>
+            <thead><tr><th>Comando</th><th>O que faz</th></tr></thead>
+            <tbody>
+              <tr><td><code>move Rex 60 40</code></td><td>Anda em linha reta até (60, 40). Cada unidade anda no máximo a sua velocidade por turno, somando todos os <code>move</code>; se não alcançar, para no caminho.</td></tr>
+              <tr><td><code>fire Rex Canhao Brutus</code></td><td>Dispara uma arma específica no alvo.</td></tr>
+              <tr><td><code>attack Rex Brutus</code></td><td>Dispara a primeira arma pronta da unidade (sem recarga e com munição).</td></tr>
+              <tr><td><code>dive Orca 30</code> / <code>surface Orca</code></td><td>Submerge ou emerge um submarino.</td></tr>
+              <tr><td><code>sonar Rex</code></td><td>Revela, por 2 turnos, os inimigos a até 3 casas (tanque) ou 4 casas (submarino e aeronave), inclusive submarinos submersos. Depois a unidade espera <b class="m-recarga-sonar">2</b> turnos para usar de novo, e o pulso <b>revela a posição dela</b> ao inimigo até o próximo turno.</td></tr>
+              <tr><td><code>if Rex.hp &lt; 50 { … }</code></td><td>Executa o bloco se a comparação for verdadeira. Dá para ler <code>hp</code>, <code>armor</code>, <code>speed</code>, <code>radar</code>, <code>depth</code>, <code>x</code> e <code>y</code> de qualquer unidade, com <code>&lt;</code>, <code>&gt;</code> e <code>==</code>.</td></tr>
+              <tr><td><code>repeat 3 { … }</code></td><td>Repete o bloco. Cada execução tem limite de 500 instruções.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h3><span class="passo">3</span> Regras de combate</h3>
+        <ul>
+          <li>Só dá para atirar em quem a sua equipe está vendo, pela visão de 2 casas de qualquer unidade ou pelo sonar. Atirar às cegas pelo nome não funciona.</li>
+          <li>Dano causado = dano da arma − blindagem do alvo (no mínimo 1). O alvo precisa estar dentro do alcance, medido em linha reta.</li>
+          <li>Depois de disparar, a arma espera a recarga (em turnos) e gasta uma munição. Sem munição, ela para de funcionar.</li>
+          <li><b>Ruínas</b> cortam pela metade o dano recebido por tanques e submarinos. Aeronaves não se abrigam.</li>
+          <li><b>Ilhas</b> bloqueiam tanques e submarinos: se houver uma no caminho, a unidade para antes dela. Aeronaves passam por cima.</li>
+          <li>Submarino submerso só é atingido por torpedo. Se ele disparar submerso, emerge no turno seguinte <b>exposto</b>, recebe dano dobrado e não pode mergulhar de novo até o turno acabar.</li>
+          <li>Em <b>água rasa</b>, o submarino não consegue submergir. Torpedo não atinge aeronave.</li>
+          <li>Ninguém atira em si mesmo nem na própria equipe.</li>
+          <li>Um <code>if</code> que lê um inimigo fora de vista, como <code>if Brutus.hp &lt; 50</code>, conta como falso.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3><span class="passo">!</span> Fim da partida</h3>
+        <ul>
+          <li><b>Vitória</b> quando todas as unidades inimigas são destruídas; <b>derrota</b> quando as suas são.</li>
+          <li><b>Empate</b> quando nenhum lado tem mais armas capazes de ferir o outro (sem munição, ou só torpedos contra aeronaves, por exemplo) ou quando a partida chega a 50 turnos.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3><span class="passo">4</span> Mapa e névoa de guerra</h3>
+        <p>O mapa vai de 0 a 199 em x e de 0 a 99 em y; cada célula tem 10 de lado. Cada unidade enxerga só 2 casas ao redor, e a IA também: ela não vê através da névoa. Quando perde você de vista, ela calcula onde você provavelmente está e vai procurar lá, usando sonar. Mudar de posição e se esconder funciona. Passe o mouse no mapa para ver as coordenadas e clique numa célula para inseri-las no editor. Clicar no nome de uma unidade ou arma também insere o nome.</p>
+        <p>Enquanto você digita, o editor sugere o próximo pedaço do comando: tipos e armas no cenário; unidades, armas, alvos, coordenadas e atributos no turno. Use as setas e <kbd>Enter</kbd> ou <kbd>Tab</kbd> para aceitar, ou <kbd>Ctrl</kbd> + <kbd>Espaço</kbd> para abrir as sugestões.</p>
+        <p>Erros de digitação, de sintaxe e de regras aparecem sublinhados na linha do editor. <kbd>Ctrl</kbd> + <kbd>Enter</kbd> executa a aba aberta.</p>
+      </section>
+    </div>
+    <footer>
+      <button type="button" class="primario" data-fechar-manual>Começar</button>
+    </footer>
+  </dialog>
+
+  <div id="fim" class="fim" hidden>
+    <div class="fim-caixa" role="dialog" aria-modal="true" aria-labelledby="fim-titulo">
+      <h2 id="fim-titulo"></h2>
+      <p id="fim-texto"></p>
+      <div class="fim-acoes">
+        <button type="button" id="fim-ver" class="secundario">Ver o mapa</button>
+        <button type="button" id="fim-nova" class="primario">Nova batalha</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/mode/simple.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/display/placeholder.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

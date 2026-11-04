@@ -1,30 +1,12 @@
 # Unidades que participam da batalha.
 tank Atlas {
-    hp 120
-    armor 35
-    speed 30
-    radar 65
-    gun MainGun {
-        damage 40
-        range 400
-        ammo 6
-        cooldown 1
-    }
+    gun MainGun
 }
 team Blue {
     Atlas
 }
 submarine Coral {
-    hp 80
-    armor 10
-    speed 25
-    radar 70
-    torpedo Dardo {
-        damage 50
-        range 600
-        ammo 3
-        cooldown 2
-    }
+    torpedo Dardo
 }
 team Red {
     Coral

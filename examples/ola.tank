@@ -1,8 +1,3 @@
-# Declaracao simples de unidade e posicao inicial.
-tank Falcon {
-    hp 100
-    armor 20
-    speed 35
-    radar 60.5
-}
+# Declara um tanque: os atributos vêm do tipo, só o nome é escolhido.
+tank Falcon { }
 move Falcon 20 20

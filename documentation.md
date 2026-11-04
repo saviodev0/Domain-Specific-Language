@@ -1,6 +1,6 @@
 # 🛡️ TankIO — Arena Tactical Simulator & TankScript DSL
 
-O **TankIO** é um jogo de simulação tática baseado em turnos que utiliza uma Linguagem de Domínio Específico (**DSL**) própria, chamada **TankScript**. O jogo combina elementos de estratégia por turnos, gestão de munições, névoa de guerra, utilização de terreno tático e combate entre veículos blindados e submarinos.
+O **TankIO** é um jogo de simulação tática baseado em turnos que utiliza uma Linguagem de Domínio Específico (**DSL**) própria, chamada **TankScript**. O jogo combina elementos de estratégia por turnos, gestão de munições, névoa de guerra, utilização de terreno tático e combate entre tanques, submarinos e aeronaves.
 
 ---
 
@@ -14,8 +14,9 @@ O campo de batalha é representado numa grelha bidimensional com coordenadas de 
 | :---: | :--- | :--- |
 | **`T`** | **Tanque** | Unidade terrestre blindada. |
 | **`S`** | **Submarino** | Unidade aquática (superfície ou submerso `~S~`). |
-| **`I`** | **Ilha / Montanha** | **Obstáculo Inabalável:** Bloqueia movimentação. Tentativas de atravessar geram aviso de colisão. |
-| **`#`** | **Ruínas / Cobertura** | **Posição Defensiva:** Unidades posicionadas aqui recebem **50% a menos de dano** de ataques. |
+| **`A`** | **Aeronave** | Unidade aérea: voa sobre ilhas e não se abriga em ruínas. |
+| **`I`** | **Ilha / Montanha** | **Obstáculo Inabalável:** Bloqueia tanques e submarinos. Aeronaves passam por cima. |
+| **`#`** | **Ruínas / Cobertura** | **Posição Defensiva:** Tanques e submarinos posicionados aqui recebem **50% a menos de dano** de ataques. |
 | **`~`** | **Água Rasa** | **Zona Restrita:** Submarinos em água rasa **não podem submergir** (`dive`). |
 | **`?`** | **Névoa de Guerra** | **Célula Oculta:** Áreas fora do alcance de radar das tuas unidades ou de pulso de sonar. |
 | **`.`** | **Terreno Aberto** | Solo ou água comum sem modificadores. |
@@ -24,19 +25,50 @@ O campo de batalha é representado numa grelha bidimensional com coordenadas de 
 
 ## 🌫️ 2. Névoa de Guerra & Deteção
 
-1. **Visão Passiva (Radar):** Toda a unidade possui um raio de radar definido (`radar`). Áreas dentro do seu raio revelam o mapa em tempo real.
+1. **Visão Passiva (Radar):** Toda a unidade enxerga só **2 casas ao redor**. A equipa partilha a visão: o que uma unidade vê, todas podem atacar.
 2. **Furtividade de Submarinos:** Submarinos submersos (`depth > 0`) pertencentes à equipa inimiga ficam **totalmente invisíveis**, a menos que sejam detetados por Sonar ou tenham atacado no turno anterior.
-3. **Mecânica do Sonar:** O comando `sonar` emite um pulso que revela unidades num raio expandido ($1.5\times$) durante 2 turnos, ignorando a furtividade de submersão.
+3. **Mecânica do Sonar:** O comando `sonar` revela, durante 2 turnos, os inimigos a até 3 casas (tanque) ou 4 casas (submarino e aeronave), ignorando a furtividade de submersão. Depois a unidade espera **2 turnos** para usar o sonar de novo, e o pulso **denuncia a posição** de quem o emitiu ao inimigo até o turno seguinte.
+4. **Linha de Visão:** Só é possível disparar contra um alvo que a equipa esteja a ver (radar, sonar ou submarino exposto). Ordens contra alvos fora de vista falham com `[SEM VISÃO]`.
 
 ---
 
 ## ⚔️ 3. Regras de Combate e Mecânicas
 
+### Unidades e Armas
+
+Os atributos são fixos por tipo; declarar uma unidade só escolhe o nome e as armas (até 2, do tipo permitido).
+
+| Tipo | HP | Blindagem | Velocidade por turno | Visão | Sonar | Arma |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| `tank` | 120 | 15 | 30 | 2 casas | 3 casas | `gun` |
+| `submarine` | 90 | 10 | 25 | 2 casas | 4 casas | `torpedo` |
+| `aircraft` | 70 | 5 | 60 | 2 casas | 4 casas | `missile` |
+
+| Arma | Dano | Alcance | Munição | Recarga |
+| :--- | :---: | :---: | :---: | :---: |
+| `gun` | 40 | 60 | 6 | 1 |
+| `torpedo` | 70 | 80 | 3 | 2 |
+| `missile` | 55 | 100 | 2 | 2 |
+
+### Movimento
+* Antes do primeiro turno o posicionamento é livre. Depois, cada unidade anda no máximo a sua velocidade por turno, somando todos os `move`; se o destino estiver mais longe, ela para no caminho.
+* Tanques e submarinos param antes de uma ilha que esteja no caminho; aeronaves passam por cima.
+
 ### Modificadores de Dano
 * **Ataque Padrão:** $\text{Dano Real} = \text{Dano da Arma} - \text{Armadura do Alvo}$.
 * **Cobertura (`#`):** Se o alvo estiver numa cobertura, o dano final sofre redução de **50%**.
-* **Submarino Exposto (Crítico!):** Se um submarino ataca enquanto está submerso, ele é obrigado a emergir no turno seguinte, ficando no estado **EXPOSTO**. Ataques sofridos enquanto exposto causam **Dano Duplo ($2\times$)**.
-* **Imunidade Submersa:** Canhões convencionais (`gun`) **não causam dano** a submarinos submersos (`depth > 0`).
+* **Submarino Exposto (Crítico!):** Se um submarino ataca enquanto está submerso, ele é obrigado a emergir no turno seguinte, ficando no estado **EXPOSTO**. Ataques sofridos enquanto exposto causam **Dano Duplo ($2\times$)**, e o submarino não pode mergulhar de novo até o turno seguinte.
+* **Imunidade Submersa:** Só torpedos atingem submarinos submersos (`depth > 0`).
+* **Aeronaves:** Torpedos **não atingem** aeronaves.
+* **Fogo amigo:** ninguém atira em si mesmo nem em unidades da própria equipa; `attack` usa a primeira arma pronta.
+
+### Fim da Partida
+* **Vitória/Derrota:** vence a equipa que destruir todas as unidades da outra.
+* **Empate:** quando nenhuma equipa tem mais armas capazes de ferir a outra, ou ao chegar a 50 turnos.
+
+### IA inimiga
+* A IA só enxerga o que as suas unidades alcançam, com as mesmas regras de visão e sonar do jogador. Quando perde o jogador de vista, estima onde ele pode estar com um mapa de calor por simulação de Monte Carlo, adaptado do projeto [battleships_ai](https://github.com/mitchelljy/battleships_ai), de DataSnaek (hoje mitchelljy no GitHub; licença MIT), e usa o sonar quando a região provável está ao alcance.
+* Com o alvo à vista, concentra o fogo na unidade mais fácil de destruir, só usa armas que funcionam contra ela, recua quando tem alcance maior e mergulha os submarinos quando não estão atirando.
 
 ### Munição e Cooldown
 * **Munição (`ammo`):** Cada arma possui uma quantidade limitada de tiros. Quando atinge $0$, a arma fica inoperante.
@@ -64,32 +96,15 @@ Durante a tua jogada, podes inserir os seguintes comandos interativos no termina
 O ficheiro de cenário `.tank` permite declarar unidades, equipas e ordens iniciais:
 
 ```tankscript
-# Declaração de um Tanque
+# Declaração de um Tanque com dois canhões
 tank Tiger1 {
-    hp 100
-    armor 30
-    speed 40
-    radar 70
-    gun Cannon {
-        damage 50
-        range 500
-        ammo 5
-        cooldown 1
-    }
+    gun Cannon
+    gun Reserve
 }
 
 # Declaração de um Submarino
 submarine Shark1 {
-    hp 80
-    armor 10
-    speed 25
-    radar 90
-    torpedo T1 {
-        damage 70
-        range 800
-        ammo 3
-        cooldown 2
-    }
+    torpedo T1
 }
 
 # Organização das Equipas

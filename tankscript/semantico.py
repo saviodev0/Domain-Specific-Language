@@ -5,13 +5,8 @@ from gerado.TankScriptParser import TankScriptParser
 from gerado.TankScriptParserVisitor import TankScriptParserVisitor
 
 from .arvore import arvore_sintatica
+from .catalogo import ARMAS, ATRIBUTOS, MAXIMO_DE_ARMAS, UNIDADES
 
-PROPRIEDADES_DE_UNIDADE = {
-    "tank": {"hp", "armor", "speed", "radar"},
-    "submarine": {"hp", "armor", "speed", "radar", "depth"},
-}
-PROPRIEDADES_DE_ARMA = {"damage", "range", "ammo", "cooldown"}
-PROPRIEDADES_INTEIRAS = {"hp", "armor", "speed", "damage", "range", "ammo", "cooldown"}
 PROPRIEDADES_CONSULTAVEIS = {"hp", "armor", "speed", "radar", "depth", "x", "y"}
 
 NUMERO = "número"
@@ -57,40 +52,37 @@ class AnalisadorSemantico(TankScriptParserVisitor):
 
     def visitUnidade(self, ctx: TankScriptParser.UnidadeContext):
         nome = ctx.IDENTIFIER()
-        tipo = "tank" if ctx.TANK() else "submarine"
+        tipo = ctx.getChild(0).getText()
         unidade = Unidade(tipo)
-        self._verificar_propriedades(ctx.propriedade(), PROPRIEDADES_DE_UNIDADE[tipo], f"{tipo} '{nome.getText()}'")
+        self._rejeitar_propriedades(ctx.propriedade(), tipo, {atributo: UNIDADES[tipo][atributo] for atributo in ATRIBUTOS})
 
+        permitidas = UNIDADES[tipo]["armas"]
         for arma in ctx.arma():
             nome_arma = arma.IDENTIFIER()
-            tipo_arma = "gun" if arma.GUN() else "torpedo"
-            if nome_arma.getText() in unidade.armas:
+            tipo_arma = arma.getChild(0).getText()
+            if tipo_arma not in permitidas:
+                self._erro(arma, f"{tipo} não monta {tipo_arma}; use {', '.join(permitidas)}")
+            elif nome_arma.getText() in unidade.armas:
                 self._erro(nome_arma, f"arma '{nome_arma.getText()}' já declarada em '{nome.getText()}'")
+            elif len(unidade.armas) == MAXIMO_DE_ARMAS:
+                self._erro(nome_arma, f"'{nome.getText()}' já tem {MAXIMO_DE_ARMAS} armas, o máximo por unidade")
             else:
                 unidade.armas[nome_arma.getText()] = tipo_arma
-            self._verificar_propriedades(
-                arma.propriedade(), PROPRIEDADES_DE_ARMA, f"{tipo_arma} '{nome_arma.getText()}'"
-            )
+            self._rejeitar_propriedades(arma.propriedade(), tipo_arma, ARMAS[tipo_arma])
 
         if nome.getText() in self.unidades:
             self._erro(nome, f"unidade '{nome.getText()}' já declarada")
         else:
             self.unidades[nome.getText()] = unidade
 
-    def _verificar_propriedades(self, propriedades, permitidas: Set[str], dono: str) -> None:
-        vistas = set()
+    def _rejeitar_propriedades(self, propriedades, tipo: str, fixos: Dict[str, int]) -> None:
         for propriedade in propriedades:
             nome = propriedade.IDENTIFIER()
             texto = nome.getText()
-            if texto not in permitidas:
-                self._erro(nome, f"propriedade '{texto}' não existe em {dono}; use: {', '.join(sorted(permitidas))}")
-                continue
-            if texto in vistas:
-                self._erro(nome, f"propriedade '{texto}' repetida em {dono}")
-            vistas.add(texto)
-            valor = propriedade.numero()
-            if texto in PROPRIEDADES_INTEIRAS and valor.FLOAT():
-                self._erro(valor, f"'{texto}' deve ser inteiro, mas recebeu {valor.getText()}")
+            if texto in fixos:
+                self._erro(nome, f"'{texto}' é fixo: todo {tipo} tem {texto} {fixos[texto]}; declare só o nome e as armas")
+            else:
+                self._erro(nome, f"'{texto}' não é atributo de {tipo}; os atributos vêm do tipo: {', '.join(fixos)}")
 
     def visitEquipe(self, ctx: TankScriptParser.EquipeContext):
         nome, *membros = ctx.IDENTIFIER()
@@ -138,6 +130,7 @@ class AnalisadorSemantico(TankScriptParserVisitor):
         self._unidade(alvo)
         if unidade is not None and not unidade.armas:
             self._erro(atacante, f"'{atacante.getText()}' não tem armas para atacar")
+        self._verificar_alvo(atacante, alvo)
 
     def visitDisparo(self, ctx: TankScriptParser.DisparoContext):
         atacante, arma, alvo = ctx.IDENTIFIER()
@@ -145,9 +138,20 @@ class AnalisadorSemantico(TankScriptParserVisitor):
         if unidade is not None and arma.getText() not in unidade.armas:
             self._erro(arma, f"'{atacante.getText()}' não possui a arma '{arma.getText()}'")
         self._unidade(alvo)
+        self._verificar_alvo(atacante, alvo)
+
+    def _verificar_alvo(self, atacante, alvo) -> None:
+        if atacante.getText() == alvo.getText():
+            self._erro(alvo, f"'{atacante.getText()}' não pode atacar a si mesmo")
+            return
+        equipe = self._equipe_da_unidade.get(atacante.getText())
+        if equipe is not None and equipe == self._equipe_da_unidade.get(alvo.getText()):
+            self._erro(alvo, f"'{alvo.getText()}' é da mesma equipe de '{atacante.getText()}' ({equipe})")
 
     def visitMergulho(self, ctx: TankScriptParser.MergulhoContext):
         self._exigir_submarino(ctx.DIVE(), ctx.IDENTIFIER())
+        if float(ctx.numero().getText()) <= 0:
+            self._erro(ctx.numero(), "a profundidade do 'dive' precisa ser maior que 0; para subir, use 'surface'")
 
     def visitEmersao(self, ctx: TankScriptParser.EmersaoContext):
         self._exigir_submarino(ctx.SURFACE(), ctx.IDENTIFIER())

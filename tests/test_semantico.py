@@ -18,8 +18,8 @@ VALID_PROGRAMS = [
 SEMANTIC_INVALID_EXAMPLES = sorted((PROJECT_ROOT / "examples" / "invalidos_semanticos").glob("*.tank"))
 
 UNIDADES = """
-tank Alpha { hp 100 gun Cannon { damage 40 } }
-submarine Shark { hp 80 torpedo T1 { damage 70 } }
+tank Alpha { gun Cannon }
+submarine Shark { torpedo T1 }
 """
 
 
@@ -44,7 +44,7 @@ def test_symbol_table_records_units_weapons_teams_and_battles():
 
 
 def test_declarations_may_appear_after_their_use():
-    analisar("move Alpha 1 2 tank Alpha { hp 1 }")
+    analisar("move Alpha 1 2 tank Alpha { }")
 
 
 @pytest.mark.parametrize(
@@ -56,15 +56,19 @@ def test_declarations_may_appear_after_their_use():
         ("fire Alpha T1 Shark", "'Alpha' não possui a arma 'T1'"),
         ("dive Alpha 10", "'dive' só vale para submarinos, e 'Alpha' é tank"),
         ("surface Alpha", "'surface' só vale para submarinos, e 'Alpha' é tank"),
-        ("tank Beta { hp 1 } attack Beta Alpha", "'Beta' não tem armas para atacar"),
-        ("tank Alpha { hp 1 }", "unidade 'Alpha' já declarada"),
-        ("tank Beta { gun G { } gun G { } }", "arma 'G' já declarada em 'Beta'"),
-        ("tank Beta { hp 1 hp 2 }", "propriedade 'hp' repetida em tank 'Beta'"),
-        ("tank Beta { armr 1 }", "propriedade 'armr' não existe em tank 'Beta'"),
-        ("tank Beta { depth 10 }", "propriedade 'depth' não existe em tank 'Beta'"),
-        ("tank Beta { gun G { speed 1 } }", "propriedade 'speed' não existe em gun 'G'"),
-        ("tank Beta { hp 10.5 }", "'hp' deve ser inteiro, mas recebeu 10.5"),
-        ("tank Beta { gun G { ammo 2.5 } }", "'ammo' deve ser inteiro, mas recebeu 2.5"),
+        ("tank Beta { } attack Beta Alpha", "'Beta' não tem armas para atacar"),
+        ("tank Alpha { }", "unidade 'Alpha' já declarada"),
+        ("tank Beta { gun G gun G }", "arma 'G' já declarada em 'Beta'"),
+        ("tank Beta { gun A gun B gun C }", "'Beta' já tem 2 armas, o máximo por unidade"),
+        ("tank Beta { torpedo T }", "tank não monta torpedo; use gun"),
+        ("aircraft Hawk { gun G }", "aircraft não monta gun; use missile"),
+        ("submarine Orca { missile M }", "submarine não monta missile; use torpedo"),
+        ("tank Beta { hp 200 }", "'hp' é fixo: todo tank tem hp 120"),
+        ("aircraft Hawk { radar 1 }", "'radar' é fixo: todo aircraft tem radar 20"),
+        ("tank Beta { armr 1 }", "'armr' não é atributo de tank"),
+        ("submarine Orca { depth 10 }", "'depth' não é atributo de submarine"),
+        ("tank Beta { gun G { damage 99 } }", "'damage' é fixo: todo gun tem damage 40"),
+        ("aircraft Hawk { } dive Hawk 10", "'dive' só vale para submarinos, e 'Hawk' é aircraft"),
         ("team Blue { Ghost }", "unidade 'Ghost' não declarada"),
         ("team Blue { Alpha Alpha }", "unidade 'Alpha' repetida na equipe 'Blue'"),
         ("team Blue { Alpha } team Red { Alpha }", "unidade 'Alpha' já pertence à equipe 'Blue'"),
@@ -124,7 +128,7 @@ def test_delivery_has_three_semantically_invalid_programs():
 
 
 def test_radar_is_readable_in_conditions():
-    source = "tank Alpha { radar 70 } if Alpha.radar > 50 { move Alpha 5 5 }"
+    source = "tank Alpha { } if Alpha.radar > 10 { move Alpha 5 5 }"
     analisar(source)
     interpreter = Interpreter(Parser(Lexer(source).tokenize()).parse())
     for declaration in interpreter.ast["declarations"]:
