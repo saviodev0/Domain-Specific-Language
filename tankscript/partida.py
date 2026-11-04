@@ -9,7 +9,7 @@ from gerado.TankScriptParser import TankScriptParser
 
 from .ai import EnemyAI
 from .arvore import arvore_sintatica
-from .catalogo import CUSTO_DE_ARMA_EXTRA, MAXIMO_DE_ARMAS, ORCAMENTO, UNIDADES, custo
+from .catalogo import CUSTO_DE_ARMA_EXTRA, MAXIMO_DE_ARMAS, ORCAMENTO, RECARGA_DO_SONAR, UNIDADES, custo
 from .interpreter import Interpreter
 from .lexer import Lexer
 from .parser import Parser
@@ -17,8 +17,10 @@ from .renderer import GridRenderer
 from .semantico import AnalisadorSemantico, ErroSemantico
 
 LIMITE_DE_INSTRUCOES = 500
+LIMITE_DE_TURNOS = 50
 
 _POSICAO = re.compile(r"[Ll]inha (\d+), coluna (\d+)")
+_DISPARO = re.compile(r"\[FIRE SUCESSO\] \w+ usou \w+ em (\w+)! (Dano: \d+ \(HP: \d+\))")
 
 
 class ErroDaPartida(Exception):
@@ -192,6 +194,11 @@ class _InterpretadorComEventos(Interpreter):
             )
 
         if stmt["type"] == "IfStatement":
+            oculta = self._partida.unidade_oculta(stmt["condition"]) if self.origem == "jogador" else None
+            if oculta:
+                self.registrar("IfStatement", f"[SEM VISÃO] {oculta} está fora de vista; a condição conta como falsa",
+                               stmt.get("linha"), resultado=False)
+                return None
             self.registrar("IfStatement", linha=stmt.get("linha"), resultado=self.evaluate_expression(stmt["condition"]))
             return super().execute_statement(stmt)
         if stmt["type"] == "RepeatStatement":
@@ -239,6 +246,39 @@ class Partida:
             return list(self.interpretador.units)
         return self.membros(self.jogador)
 
+    def _vivas(self, equipe: Optional[str]) -> list:
+        return [self.interpretador.units[nome] for nome in self.membros(equipe) if self.interpretador.units[nome].is_alive()]
+
+    @property
+    def motivo_do_empate(self) -> Optional[str]:
+        """Empata quando o limite de turnos acaba ou quando nenhum lado consegue mais ferir o outro."""
+        if self.jogador is None or self.inimigo is None or self.vencedor is not None:
+            return None
+        if self.turno >= LIMITE_DE_TURNOS:
+            return f"o limite de {LIMITE_DE_TURNOS} turnos acabou"
+        jogador, inimigo = self._vivas(self.jogador), self._vivas(self.inimigo)
+        if not _pode_ferir(jogador, inimigo) and not _pode_ferir(inimigo, jogador):
+            return "nenhum lado tem mais armas capazes de ferir o adversário"
+        return None
+
+    @property
+    def encerrada(self) -> bool:
+        return self.vencedor is not None or self.motivo_do_empate is not None
+
+    def _visivel_para_o_jogador(self, unidade) -> bool:
+        if unidade.name in self.comandaveis or not unidade.is_alive() or self.jogador is None:
+            return True
+        return self.renderer.is_shown(unidade, False, self.renderer.visible_cells(self.interpretador.units, self.comandaveis))
+
+    def unidade_oculta(self, condicao: Dict[str, Any]) -> Optional[str]:
+        """Nome da unidade inimiga lida na condição que o jogador não está vendo, se houver."""
+        for lado in (condicao.get("left"), condicao.get("right")):
+            if lado and lado["type"] == "MemberAccess":
+                unidade = self.interpretador.units.get(lado["unit"])
+                if unidade is not None and not self._visivel_para_o_jogador(unidade):
+                    return unidade.name
+        return None
+
     @property
     def vencedor(self) -> Optional[str]:
         if self.jogador is None or self.inimigo is None:
@@ -263,7 +303,7 @@ class Partida:
         visiveis = self.renderer.visible_cells(unidades, comandaveis)
         if self.jogador is None:
             visiveis = {(x, y) for x in range(self.renderer.width) for y in range(self.renderer.height)}
-        return {
+        estado = {
             "unidades": [
                 {
                     "nome": unidade.name,
@@ -300,6 +340,12 @@ class Partida:
             ],
             "visiveis": sorted([x, y] for x, y in visiveis),
         }
+        # o navegador não recebe o que o jogador não vê: posição, vida e armas de inimigos na névoa
+        for unidade in estado["unidades"]:
+            if unidade["lado"] == "inimigo" and unidade["vivo"] and not unidade["visivel"]:
+                unidade.update(x=None, y=None, hp=None, profundidade=None, movimento=None,
+                               sonar_recarga=None, exposto=False, detectado=False, armas=[])
+        return estado
 
     def mapa(self) -> Dict[str, Any]:
         return descrever_mapa(self.renderer)
@@ -316,6 +362,8 @@ class Partida:
     def jogar_turno(self, codigo: str) -> List[Dict[str, Any]]:
         if self.vencedor is not None:
             raise ErroDaPartida(f"A partida terminou; a equipe '{self.vencedor}' venceu")
+        if self.motivo_do_empate is not None:
+            raise ErroDaPartida(f"A partida terminou empatada: {self.motivo_do_empate}")
         _verificar(codigo, AnalisadorDaPartida(self.renderer, base=self.tabela, comandaveis=set(self.comandaveis)))
         ast = _ast(codigo)
         self.turno += 1
@@ -329,9 +377,17 @@ class Partida:
 
         eventos += self._executar(ast["statements"], "jogador")
         if self.ia is not None and self.vencedor is None:
+            anterior = eventos[-1]["estado"]
             self.interpretador.iniciar("ia")
             self.ia.compute_turn(self.interpretador, self.membros(self.jogador))
+            for evento in self.interpretador.eventos:
+                _ocultar_ator_na_nevoa(evento, anterior)
+                anterior = evento["estado"]
             eventos += self.interpretador.eventos
+            # a IA joga depois do jogador: o ruído do sonar dela dura até a próxima vez do jogador
+            for unidade in self._vivas(self.inimigo):
+                if unidade.sonar_cooldown == RECARGA_DO_SONAR:
+                    unidade.sonar_ping_turns = max(unidade.sonar_ping_turns, 2)
         return eventos
 
     def resumo(self) -> Dict[str, Any]:
@@ -341,7 +397,55 @@ class Partida:
             "comandaveis": self.comandaveis,
             "turno": self.turno,
             "vencedor": self.vencedor,
+            "empate": self.motivo_do_empate is not None,
+            "motivo_do_empate": self.motivo_do_empate,
         }
+
+
+def _pode_ferir(atacantes: list, alvos: list) -> bool:
+    for atacante in atacantes:
+        for arma in atacante.weapons:
+            if arma["ammo"] <= 0:
+                continue
+            for alvo in alvos:
+                if alvo.kind == "aircraft" and arma["kind"] == "torpedo":
+                    continue
+                # canhão e míssil só alcançam o submarino na superfície; sem munição, ele pode ficar submerso
+                if alvo.kind == "submarine" and arma["kind"] != "torpedo" and alvo.depth > 0 \
+                        and not any(a["ammo"] > 0 for a in alvo.weapons):
+                    continue
+                return True
+    return False
+
+
+def _ocultar_ator_na_nevoa(evento: Dict[str, Any], anterior: Dict[str, Any]) -> None:
+    """Tira do registro o que o jogador não poderia saber: quem agiu e onde, se estava na névoa."""
+    instrucao = evento.get("instrucao") or {}
+    ator = instrucao.get("unit") or instrucao.get("attacker")
+    if ator is None:
+        return
+    def visivel(estado):
+        return any(unidade["nome"] == ator and unidade["visivel"] for unidade in estado["unidades"])
+    if visivel(anterior) or visivel(evento["estado"]):
+        return
+
+    tipo = evento["tipo"]
+    if tipo == "MoveStatement":
+        evento["mensagens"] = ["Movimento inimigo na névoa"] if evento["mensagens"] else []
+        evento["instrucao"] = {}
+    elif tipo in ("DiveStatement", "SurfaceStatement"):
+        evento["mensagens"] = ["Ruído de submarino na névoa"] if evento["mensagens"] else []
+        evento["instrucao"] = {}
+    elif tipo in ("FireStatement", "AttackStatement"):
+        mensagens = []
+        for mensagem in evento["mensagens"]:
+            disparo = _DISPARO.search(mensagem)
+            if disparo:
+                mensagens.append(f"[FIRE SUCESSO] Um inimigo fora de vista atingiu {disparo[1]}! {disparo[2]}")
+            elif "[COBERTURA]" in mensagem or "[CRÍTICO]" in mensagem:
+                mensagens.append(mensagem)
+        evento["mensagens"] = mensagens
+        evento["instrucao"] = {"target": instrucao.get("target")}
 
 
 NOMES_INIMIGOS = {

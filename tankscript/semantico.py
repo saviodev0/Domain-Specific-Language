@@ -130,6 +130,7 @@ class AnalisadorSemantico(TankScriptParserVisitor):
         self._unidade(alvo)
         if unidade is not None and not unidade.armas:
             self._erro(atacante, f"'{atacante.getText()}' não tem armas para atacar")
+        self._verificar_alvo(atacante, alvo)
 
     def visitDisparo(self, ctx: TankScriptParser.DisparoContext):
         atacante, arma, alvo = ctx.IDENTIFIER()
@@ -137,9 +138,20 @@ class AnalisadorSemantico(TankScriptParserVisitor):
         if unidade is not None and arma.getText() not in unidade.armas:
             self._erro(arma, f"'{atacante.getText()}' não possui a arma '{arma.getText()}'")
         self._unidade(alvo)
+        self._verificar_alvo(atacante, alvo)
+
+    def _verificar_alvo(self, atacante, alvo) -> None:
+        if atacante.getText() == alvo.getText():
+            self._erro(alvo, f"'{atacante.getText()}' não pode atacar a si mesmo")
+            return
+        equipe = self._equipe_da_unidade.get(atacante.getText())
+        if equipe is not None and equipe == self._equipe_da_unidade.get(alvo.getText()):
+            self._erro(alvo, f"'{alvo.getText()}' é da mesma equipe de '{atacante.getText()}' ({equipe})")
 
     def visitMergulho(self, ctx: TankScriptParser.MergulhoContext):
         self._exigir_submarino(ctx.DIVE(), ctx.IDENTIFIER())
+        if float(ctx.numero().getText()) <= 0:
+            self._erro(ctx.numero(), "a profundidade do 'dive' precisa ser maior que 0; para subir, use 'surface'")
 
     def visitEmersao(self, ctx: TankScriptParser.EmersaoContext):
         self._exigir_submarino(ctx.SURFACE(), ctx.IDENTIFIER())

@@ -2,7 +2,7 @@ import { Arena, TERRENOS } from "./arena.js";
 import { criarCompletar } from "./completar.js";
 import { Editor } from "./editor.js";
 
-const MAXIMO_DE_TURNOS_AUTOMATICOS = 40;
+const MAXIMO_DE_TURNOS_AUTOMATICOS = 50;
 const MAXIMO_NO_REGISTRO = 300;
 const NOMES_DOS_TIPOS = { tank: "tanque", submarine: "submarino", aircraft: "aeronave" };
 const ESPECIAIS = {
@@ -326,6 +326,12 @@ async function iniciarBatalha() {
   await reproduzir(dados.eventos);
 
   if (!editor.texto("turno").trim()) editor.definir("turno", modeloDoTurno(dados));
+  if (dados.empate) {
+    definirFase("fim", "Empate");
+    ocupar(false);
+    mostrarAba("turno");
+    return mostrarFim(dados);
+  }
   definirFase("turnos", "Sua vez");
   ocupar(false);
   mostrarAba("turno");
@@ -341,9 +347,9 @@ async function jogarTurno() {
   $("#turno").textContent = `Turno ${dados.turno}`;
   await reproduzir(dados.eventos);
   jogo.partida = { ...jogo.partida, ...dados };
-  if (dados.vencedor) {
+  if (dados.vencedor || dados.empate) {
     jogo.automatico = false;
-    definirFase("fim", dados.vencedor === jogo.partida.jogador ? "Vitória" : "Derrota");
+    definirFase("fim", dados.empate ? "Empate" : dados.vencedor === jogo.partida.jogador ? "Vitória" : "Derrota");
     mostrarFim(dados);
   } else {
     definirFase("turnos", "Sua vez");
@@ -375,11 +381,14 @@ async function executar() {
 
 function mostrarFim(dados) {
   const venceu = dados.vencedor === jogo.partida.jogador;
-  $("#fim").dataset.resultado = venceu ? "vitoria" : "derrota";
-  $("#fim-titulo").textContent = venceu ? "Vitória" : "Derrota";
-  $("#fim-texto").textContent = venceu
-    ? `Você destruiu a frota inimiga no turno ${dados.turno}.`
-    : `Seu exército foi destruído no turno ${dados.turno}. Ajuste o exército ou o programa e tente de novo.`;
+  const resultado = dados.empate ? "empate" : venceu ? "vitoria" : "derrota";
+  $("#fim").dataset.resultado = resultado;
+  $("#fim-titulo").textContent = { empate: "Empate", vitoria: "Vitória", derrota: "Derrota" }[resultado];
+  $("#fim-texto").textContent = {
+    empate: `A partida empatou no turno ${dados.turno}: ${dados.motivo_do_empate}.`,
+    vitoria: `Você destruiu a frota inimiga no turno ${dados.turno}.`,
+    derrota: `Seu exército foi destruído no turno ${dados.turno}. Ajuste o exército ou o programa e tente de novo.`,
+  }[resultado];
   $("#fim").hidden = false;
 }
 

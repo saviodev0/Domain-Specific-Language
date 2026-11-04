@@ -11,7 +11,7 @@ const NOMES_DE_EXEMPLO = { gun: "Canhao", torpedo: "Torpedo", missile: "Missil" 
 const COMANDOS = [
   ["move", "move unidade x y", "anda até (x, y)"],
   ["fire", "fire unidade arma alvo", "dispara uma arma"],
-  ["attack", "attack unidade alvo", "dispara a primeira arma"],
+  ["attack", "attack unidade alvo", "dispara a primeira arma pronta"],
   ["dive", "dive submarino profundidade", "submerge"],
   ["surface", "surface submarino", "emerge"],
   ["sonar", "sonar unidade", "revela inimigos a 3–4 casas"],

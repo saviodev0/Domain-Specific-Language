@@ -61,8 +61,9 @@ def test_submerged_enemy_is_hidden_from_the_player():
     partida = Partida(BATALHA)
     shark = next(u for u in partida.estado()["unidades"] if u["nome"] == "Shark1")
 
-    assert shark["profundidade"] == 40
+    assert partida.interpretador.units["Shark1"].depth == 40
     assert shark["visivel"] is False
+    assert (shark["x"], shark["y"], shark["hp"], shark["profundidade"], shark["armas"]) == (None, None, None, None, [])
 
 
 def test_turn_runs_player_program_then_enemy_ai():
@@ -157,20 +158,30 @@ def test_movement_per_turn_is_limited_by_speed():
     assert partida.interpretador.units["T"].x == 30
 
 
-def test_aircraft_flies_over_islands_and_dodges_torpedoes():
-    partida = Partida("aircraft A { } tank T { } submarine S { torpedo P } team X { A T S } move A 50 20 move T 50 20")
-    partida.jogar_turno("move A 80 20\nmove T 80 20")
+def test_aircraft_flies_over_islands_and_tanks_stop_before_them():
+    partida = Partida("aircraft A { } tank T { } tank Longe { gun G } team X { A T } team Y { Longe } "
+                      "move A 50 20 move T 50 20 move Longe 190 90")
+    partida.ia = None
+    eventos = partida.jogar_turno("move A 80 20\nmove T 80 20")
     unidades = partida.interpretador.units
-    assert (unidades["A"].x, unidades["A"].y) == (80, 20)
-    assert (unidades["T"].x, unidades["T"].y) == (50, 20)
 
-    eventos = partida.jogar_turno("move S 60 20\nfire S P A")
+    assert (unidades["A"].x, unidades["A"].y) == (80, 20)
+    assert (unidades["T"].x, unidades["T"].y) == (79, 20)
+    assert "[COLISÃO] T encontrou uma Ilha/Montanha no caminho e parou em (79, 20)" in [m for e in eventos for m in e["mensagens"]]
+
+
+def test_torpedoes_do_not_hit_aircraft():
+    partida = Partida("aircraft A { missile M } submarine S { torpedo P } team X { S } team Y { A } move S 60 20 move A 70 20")
+    partida.ia = None
+    eventos = partida.jogar_turno("fire S P A")
+
     assert "[FIRE INEFICAZ] Torpedos não atingem aeronaves!" in [m for e in eventos for m in e["mensagens"]]
 
 
 def test_only_torpedoes_hit_a_submerged_submarine():
-    partida = Partida("aircraft A { missile M } submarine S { } team X { A S } dive S 20")
-    eventos = partida.jogar_turno("fire A M S")
+    partida = Partida("aircraft A { missile M } submarine S { torpedo T } team X { A } team Y { S } move A 60 50 move S 70 50 dive S 20")
+    partida.ia = None
+    eventos = partida.jogar_turno("sonar A\nfire A M S")
 
     assert "[FIRE INEFICAZ] Só torpedos atingem submarinos submersos!" in [m for e in eventos for m in e["mensagens"]]
 
@@ -183,7 +194,7 @@ def test_arena_builds_an_enemy_fleet_with_the_same_budget():
     inimigos = [u for u in partida.estado_inicial["unidades"] if u["lado"] == "inimigo"]
     gasto = sum(custo(u["tipo"], len(u["armas"])) for u in inimigos)
     assert ORCAMENTO - 3 < gasto <= ORCAMENTO
-    assert all(u["x"] == 180 for u in inimigos)
+    assert all(partida.interpretador.units[u["nome"]].x == 180 for u in inimigos)
     assert {u["x"] for u in partida.estado_inicial["unidades"] if u["lado"] == "jogador"} == {10}
     assert partida.codigo_do_inimigo.splitlines()[0].split()[0] in ("tank", "submarine", "aircraft")
 

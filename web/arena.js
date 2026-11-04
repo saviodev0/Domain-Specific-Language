@@ -199,6 +199,7 @@ class CenaArena extends Phaser.Scene {
     const posicoes = new Map();
     const deslocamentos = [[0, 0], [-11, -9], [11, 9], [11, -9], [-11, 9]];
     for (const unidade of estado.unidades) {
+      if (unidade.x === null) continue;
       const [gx, gy] = this.celula(unidade.x, unidade.y);
       const chave = `${gx},${gy}`;
       const indice = ocupacao.get(chave) || 0;
@@ -300,6 +301,12 @@ class CenaArena extends Phaser.Scene {
 
     for (const unidade of estado.unidades) {
       const visual = this.visual(unidade);
+      if (unidade.x === null) {
+        // inimigo na névoa: o servidor não manda a posição
+        visual.container.setVisible(false);
+        visual.unidade = unidade;
+        continue;
+      }
       const aparencia = `${unidade.lado}|${unidade.vivo}`;
       if (visual.aparencia !== aparencia) {
         this.desenharUnidade(visual, unidade);
@@ -344,7 +351,7 @@ class CenaArena extends Phaser.Scene {
       case "SurfaceStatement":
         return this.animarMergulho(dados.unit, antes, depois);
       case "SonarStatement":
-        return this.animarSonar(dados.unit, antes);
+        return this.animarSonar(dados.unit, depois, evento);
       default:
         return this.esperar(120);
     }
@@ -385,23 +392,24 @@ class CenaArena extends Phaser.Scene {
   }
 
   async animarDisparo(atacante, nomeArma, alvo, antes, depois, evento) {
-    const origem = this.visuais.get(atacante);
     const destino = this.visuais.get(alvo);
-    const unidadeAtacante = antes.get(atacante);
-    if (!origem || !destino || !unidadeAtacante) return;
+    if (!destino) return;
+    // atacante na névoa: o servidor não diz quem atirou, então só o impacto aparece
+    const origem = atacante ? this.visuais.get(atacante) : null;
+    const unidadeAtacante = atacante ? antes.get(atacante) : null;
 
     const alerta = ALERTAS.find(([marca]) => evento.mensagens.some((mensagem) => mensagem.includes(marca)));
-    const visivelAtacante = antes.get(atacante)?.visivel;
+    const visivelAtacante = Boolean(origem && unidadeAtacante?.visivel);
     if (alerta && alerta[0] !== "[FIRE INEFICAZ]") {
       if (visivelAtacante) this.texto(origem.container.x, origem.container.y - 30, alerta[1], "#b45309");
       return this.esperar(250);
     }
 
-    const arma = unidadeAtacante.armas.find((item) => item.nome === nomeArma) || unidadeAtacante.armas[0];
+    const arma = unidadeAtacante?.armas.find((item) => item.nome === nomeArma) || unidadeAtacante?.armas[0];
     const torpedo = arma?.tipo === "torpedo";
     const missil = arma?.tipo === "missile";
-    const de = { x: origem.container.x, y: origem.container.y };
     const para = { x: destino.container.x, y: destino.container.y };
+    const de = visivelAtacante ? { x: origem.container.x, y: origem.container.y } : para;
     const angulo = Phaser.Math.Angle.Between(de.x, de.y, para.x, para.y);
 
     if (visivelAtacante) {
@@ -479,12 +487,11 @@ class CenaArena extends Phaser.Scene {
     await this.tween({ targets: [visual.corpo, visual.torre], alpha: alvo, duration: 420 });
   }
 
-  async animarSonar(nome, antes) {
-    const visual = this.visuais.get(nome);
-    const unidade = antes.get(nome);
-    if (!visual || !unidade || !unidade.vivo) return;
+  async animarSonar(nome, depois, evento) {
+    const unidade = depois.get(nome);
+    if (!unidade || !unidade.vivo || !unidade.visivel || unidade.x === null) return;
     const raio = (unidade.sonar / 10 + 0.5) * CELULA;
-    const { x, y } = visual.container;
+    const { x, y } = this.posicoes(evento.estado).get(nome);
     for (const atraso of [0, 220]) {
       const onda = this.add.circle(x, y, raio).setStrokeStyle(3, 0x2563eb, 0.9).setScale(0.05).setDepth(8);
       this.time.delayedCall(this.duracao(atraso), () => {

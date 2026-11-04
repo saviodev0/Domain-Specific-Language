@@ -47,3 +47,14 @@
 - O editor ganhou autocompletar por contexto (`web/completar.js`): no cenário sugere tipos e armas permitidas; no turno sugere comandos, unidades do jogador, armas da unidade, alvos inimigos, coordenadas e atributos depois do `.`.
 - A IA inimiga foi refeita (`tankscript/ai.py`). Antes ela via todas as unidades do jogador; agora só vê o que o radar alcança. Para caçar na névoa, adaptamos o mapa de calor por simulação de Monte Carlo do projeto [battleships_ai](https://github.com/mitchelljy/battleships_ai), de DataSnaek (hoje mitchelljy no GitHub; licença MIT): a IA sorteia onde cada unidade do jogador pode estar desde a última vez que foi vista e vai para a região mais provável, usando sonar. Com o alvo à vista, concentra o fogo, escolhe armas que funcionam contra o alvo, recua quando tem alcance maior e mergulha os submarinos. Em 300 partidas contra a IA antiga (que via o mapa inteiro), a nova venceu cerca de 80%, perdeu menos de 2% e empatou o resto, por falta de munição ou por combinações de unidades que não conseguem se ferir. Os testes estão em `tests/test_ia.py`.
 - Para deixar a partida mais difícil, o orçamento subiu para 20 pontos e a visão caiu para 2 casas ao redor de cada unidade. O sonar alcança 3 casas (tanque) ou 4 (submarino e aeronave), recarrega por 2 turnos e revela ao inimigo a posição de quem o usou; ele também deixou de marcar as unidades da própria equipe. Só é possível disparar em alvos que a equipe esteja vendo. Na IA, a caça passou a escolher o destino que deixa mais probabilidade dentro do raio de visão, e, sem nenhuma pista, ela supõe que o inimigo começou do outro lado do mapa.
+
+## 2026-11-04 (revisão das regras)
+
+- Revisamos o jogo inteiro e escrevemos `tests/test_regras.py`, com 36 cenários, um por regra. No código anterior, 15 deles falhavam; todos os problemas abaixo foram corrigidos.
+- Submarino exposto conseguia mergulhar no mesmo turno e escapar do dano dobrado; agora o mergulho fica bloqueado enquanto estiver exposto.
+- O ruído do sonar da IA terminava antes da vez do jogador; agora dura até ela.
+- Era possível atirar em si mesmo e na própria equipe. A análise semântica passou a rejeitar isso, e o interpretador também bloqueia.
+- Um `if` conseguia ler a posição de inimigos na névoa, e o registro e o estado enviado ao navegador mostravam onde a IA andava. Agora a condição conta como falsa, as ações da IA na névoa aparecem sem nome nem posição, e o navegador não recebe esses dados.
+- Tanques e submarinos pulavam ilhas; agora param antes delas. O posicionamento inicial continua livre.
+- A partida podia não terminar nunca; agora empata quando ninguém consegue mais ferir o outro ou após 50 turnos.
+- `dive` com profundidade 0 era aceito, `attack` usava a primeira arma mesmo em recarga, e uma requisição com tamanho negativo travava uma thread do servidor. Os três foram corrigidos.

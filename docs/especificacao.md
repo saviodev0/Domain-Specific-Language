@@ -219,7 +219,8 @@ Cada unidade monta no máximo 2 armas. Nas condições, `unidade.propriedade` ac
 - Uma unidade aparece no máximo uma vez em uma equipe, e pertence a no máximo uma equipe.
 - A batalha só pode citar equipes declaradas, e uma equipe não enfrenta a si mesma.
 - Em `fire`, a arma precisa pertencer ao atacante; em `attack`, o atacante precisa ter pelo menos uma arma.
-- `dive` e `surface` só valem para submarinos.
+- `dive` e `surface` só valem para submarinos, e a profundidade do `dive` precisa ser maior que 0.
+- Em `fire` e `attack`, o alvo não pode ser o próprio atacante nem uma unidade da mesma equipe.
 
 **Tipos**
 
@@ -248,3 +249,5 @@ A interface web (`src/servidor.py`) usa a mesma análise, com regras a mais defi
 - O exército custa no máximo 20 pontos: `tank` 4, `submarine` 5, `aircraft` 4, e cada arma além da primeira mais 1. O inimigo gasta o mesmo orçamento.
 - O `turno.tank` só tem instruções, e cada instrução só pode comandar unidades do jogador.
 - As coordenadas de `move` precisam estar dentro do mapa: x de 0 a 199 e y de 0 a 99.
+- Durante a execução, um `if` que lê uma unidade inimiga fora de vista conta como falso, e o navegador não recebe a posição, a vida nem as armas de inimigos na névoa.
+- A partida termina em vitória quando uma equipe é destruída, e em empate quando nenhum lado consegue mais ferir o outro ou ao chegar a 50 turnos.

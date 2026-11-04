@@ -52,13 +52,19 @@ Os atributos são fixos por tipo; declarar uma unidade só escolhe o nome e as a
 
 ### Movimento
 * Antes do primeiro turno o posicionamento é livre. Depois, cada unidade anda no máximo a sua velocidade por turno, somando todos os `move`; se o destino estiver mais longe, ela para no caminho.
+* Tanques e submarinos param antes de uma ilha que esteja no caminho; aeronaves passam por cima.
 
 ### Modificadores de Dano
 * **Ataque Padrão:** $\text{Dano Real} = \text{Dano da Arma} - \text{Armadura do Alvo}$.
 * **Cobertura (`#`):** Se o alvo estiver numa cobertura, o dano final sofre redução de **50%**.
-* **Submarino Exposto (Crítico!):** Se um submarino ataca enquanto está submerso, ele é obrigado a emergir no turno seguinte, ficando no estado **EXPOSTO**. Ataques sofridos enquanto exposto causam **Dano Duplo ($2\times$)**.
+* **Submarino Exposto (Crítico!):** Se um submarino ataca enquanto está submerso, ele é obrigado a emergir no turno seguinte, ficando no estado **EXPOSTO**. Ataques sofridos enquanto exposto causam **Dano Duplo ($2\times$)**, e o submarino não pode mergulhar de novo até o turno seguinte.
 * **Imunidade Submersa:** Só torpedos atingem submarinos submersos (`depth > 0`).
 * **Aeronaves:** Torpedos **não atingem** aeronaves.
+* **Fogo amigo:** ninguém atira em si mesmo nem em unidades da própria equipa; `attack` usa a primeira arma pronta.
+
+### Fim da Partida
+* **Vitória/Derrota:** vence a equipa que destruir todas as unidades da outra.
+* **Empate:** quando nenhuma equipa tem mais armas capazes de ferir a outra, ou ao chegar a 50 turnos.
 
 ### IA inimiga
 * A IA só enxerga o que as suas unidades alcançam, com as mesmas regras de visão e sonar do jogador. Quando perde o jogador de vista, estima onde ele pode estar com um mapa de calor por simulação de Monte Carlo, adaptado do projeto [battleships_ai](https://github.com/mitchelljy/battleships_ai), de DataSnaek (hoje mitchelljy no GitHub; licença MIT), e usa o sonar quando a região provável está ao alcance.

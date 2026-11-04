@@ -120,7 +120,7 @@ aircraft Hawk { missile Ferrao }</code></pre>
             <tbody>
               <tr><td><code>move Rex 60 40</code></td><td>Anda em linha reta até (60, 40). Cada unidade anda no máximo a sua velocidade por turno, somando todos os <code>move</code>; se não alcançar, para no caminho.</td></tr>
               <tr><td><code>fire Rex Canhao Brutus</code></td><td>Dispara uma arma específica no alvo.</td></tr>
-              <tr><td><code>attack Rex Brutus</code></td><td>Dispara a primeira arma da unidade.</td></tr>
+              <tr><td><code>attack Rex Brutus</code></td><td>Dispara a primeira arma pronta da unidade (sem recarga e com munição).</td></tr>
               <tr><td><code>dive Orca 30</code> / <code>surface Orca</code></td><td>Submerge ou emerge um submarino.</td></tr>
               <tr><td><code>sonar Rex</code></td><td>Revela, por 2 turnos, os inimigos a até 3 casas (tanque) ou 4 casas (submarino e aeronave), inclusive submarinos submersos. Depois a unidade espera <b class="m-recarga-sonar">2</b> turnos para usar de novo, e o pulso <b>revela a posição dela</b> ao inimigo até o próximo turno.</td></tr>
               <tr><td><code>if Rex.hp &lt; 50 { … }</code></td><td>Executa o bloco se a comparação for verdadeira. Dá para ler <code>hp</code>, <code>armor</code>, <code>speed</code>, <code>radar</code>, <code>depth</code>, <code>x</code> e <code>y</code> de qualquer unidade, com <code>&lt;</code>, <code>&gt;</code> e <code>==</code>.</td></tr>
@@ -137,9 +137,19 @@ aircraft Hawk { missile Ferrao }</code></pre>
           <li>Dano causado = dano da arma − blindagem do alvo (no mínimo 1). O alvo precisa estar dentro do alcance, medido em linha reta.</li>
           <li>Depois de disparar, a arma espera a recarga (em turnos) e gasta uma munição. Sem munição, ela para de funcionar.</li>
           <li><b>Ruínas</b> cortam pela metade o dano recebido por tanques e submarinos. Aeronaves não se abrigam.</li>
-          <li><b>Ilhas</b> bloqueiam tanques e submarinos; aeronaves passam por cima.</li>
-          <li>Submarino submerso só é atingido por torpedo. Se ele disparar submerso, emerge no turno seguinte <b>exposto</b> e recebe dano dobrado.</li>
+          <li><b>Ilhas</b> bloqueiam tanques e submarinos: se houver uma no caminho, a unidade para antes dela. Aeronaves passam por cima.</li>
+          <li>Submarino submerso só é atingido por torpedo. Se ele disparar submerso, emerge no turno seguinte <b>exposto</b>, recebe dano dobrado e não pode mergulhar de novo até o turno acabar.</li>
           <li>Em <b>água rasa</b>, o submarino não consegue submergir. Torpedo não atinge aeronave.</li>
+          <li>Ninguém atira em si mesmo nem na própria equipe.</li>
+          <li>Um <code>if</code> que lê um inimigo fora de vista, como <code>if Brutus.hp &lt; 50</code>, conta como falso.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3><span class="passo">!</span> Fim da partida</h3>
+        <ul>
+          <li><b>Vitória</b> quando todas as unidades inimigas são destruídas; <b>derrota</b> quando as suas são.</li>
+          <li><b>Empate</b> quando nenhum lado tem mais armas capazes de ferir o outro (sem munição, ou só torpedos contra aeronaves, por exemplo) ou quando a partida chega a 50 turnos.</li>
         </ul>
       </section>
 

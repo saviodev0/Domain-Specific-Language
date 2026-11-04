@@ -987,6 +987,7 @@ li.CodeMirror-hint-active {
 
 .fim[data-resultado="vitoria"] h2 { color: var(--sucesso); }
 .fim[data-resultado="derrota"] h2 { color: var(--inimigo); }
+.fim[data-resultado="empate"] h2 { color: var(--alerta); }
 
 .fim-caixa p {
   color: var(--suave);

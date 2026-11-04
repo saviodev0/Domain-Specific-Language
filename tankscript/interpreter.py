@@ -109,12 +109,19 @@ class Interpreter:
                     y = round(unit.y + (y - unit.y) * ratio)
                     print(f"[MOVE LIMITADO] {unit.name} anda até {unit.speed} por turno e parou em ({x}, {y})")
 
-                # Regra de Terreno: Ilha ("I") bloqueia movimento, exceto de aeronaves
+                # Regra de Terreno: Ilha ("I") bloqueia o caminho, exceto de aeronaves. No posicionamento
+                # inicial, antes do primeiro turno, a unidade só não pode começar em cima da ilha.
                 if self.renderer and unit.kind != "aircraft":
-                    terrain = self.renderer.get_terrain_at(x, y)
-                    if terrain == "I":
-                        print(f"[COLISÃO] {unit.name} tentou mover para uma Ilha/Montanha e foi bloqueado!")
-                        return
+                    if math.isinf(unit.movement_left):
+                        stop = (round(unit.x), round(unit.y)) if self.renderer.get_terrain_at(x, y) == "I" else None
+                    else:
+                        stop = self._last_point_before_island(unit.x, unit.y, x, y)
+                    if stop is not None:
+                        if stop == (round(unit.x), round(unit.y)):
+                            print(f"[COLISÃO] {unit.name} tentou mover para uma Ilha/Montanha e foi bloqueado!")
+                            return
+                        x, y = stop
+                        print(f"[COLISÃO] {unit.name} encontrou uma Ilha/Montanha no caminho e parou em ({x}, {y})")
 
                 unit.movement_left = max(0, unit.movement_left - math.hypot(x - unit.x, y - unit.y))
                 unit.x = x
@@ -128,6 +135,8 @@ class Interpreter:
                     print(f"[DIVE IMPOSSÍVEL] {unit.name} está em Água Rasa (~) e não pode submergir!")
                 elif unit.must_surface_next_turn:
                     print(f"[DIVE BLOQUEADO] {unit.name} atacou submerso no último turno e precisa emergir!")
+                elif unit.exposed:
+                    print(f"[DIVE BLOQUEADO] {unit.name} está EXPOSTO e só pode submergir no próximo turno!")
                 else:
                     unit.depth = stmt["depth"]
                     print(f"[DIVE] {unit.name} submergiu para {unit.depth}m")
@@ -165,7 +174,8 @@ class Interpreter:
         elif stype == "AttackStatement":
             attacker = self.units.get(stmt["attacker"])
             if attacker and attacker.weapons:
-                self.handle_fire(stmt["attacker"], attacker.weapons[0]["name"], stmt["target"])
+                ready = next((w for w in attacker.weapons if w["cooldown"] == 0 and w["ammo"] > 0), attacker.weapons[0])
+                self.handle_fire(stmt["attacker"], ready["name"], stmt["target"])
 
         elif stype == "IfStatement":
             if self.evaluate_expression(stmt["condition"]):
@@ -176,6 +186,17 @@ class Interpreter:
             for _ in range(stmt["count"]):
                 for inner in stmt["body"]:
                     self.execute_statement(inner)
+
+    def _last_point_before_island(self, x0, y0, x1, y1):
+        """Percorre o caminho e devolve o último ponto livre antes da primeira ilha, ou None se não houver ilha."""
+        steps = max(1, math.ceil(math.hypot(x1 - x0, y1 - y0)))
+        previous = (round(x0), round(y0))
+        for step in range(1, steps + 1):
+            point = (round(x0 + (x1 - x0) * step / steps), round(y0 + (y1 - y0) * step / steps))
+            if self.renderer.get_terrain_at(*point) == "I":
+                return previous
+            previous = point
+        return None
 
     def _cell(self, unit: Unit) -> tuple:
         if self.renderer:
@@ -203,6 +224,10 @@ class Interpreter:
 
         if not attacker or not attacker.is_alive() or not target or not target.is_alive():
             print("[FIRE FALHOU] Unidade inválida ou destruída.")
+            return
+
+        if attacker is target or self._same_team(attacker, target):
+            print(f"[FIRE FALHOU] {attacker.name} não atira na própria equipe!")
             return
 
         if not self._can_see(attacker, target):

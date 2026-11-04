@@ -81,8 +81,8 @@ class Manipulador(SimpleHTTPRequestHandler):
 
     def _ler_codigo(self) -> str:
         tamanho = int(self.headers.get("Content-Length", 0))
-        if tamanho > TAMANHO_MAXIMO:
-            raise ValueError("Programa grande demais")
+        if not 0 <= tamanho <= TAMANHO_MAXIMO:
+            raise ValueError("Tamanho do programa inválido ou grande demais")
         corpo = json.loads(self.rfile.read(tamanho) or b"{}")
         codigo = corpo.get("codigo") if isinstance(corpo, dict) else None
         if not isinstance(codigo, str):
