@@ -166,6 +166,35 @@ function ocupar(ativo) {
   for (const aba of document.querySelectorAll(".aba")) aba.disabled = ativo || (aba.dataset.aba === "turno" && !jogo.partida);
 }
 
+function atualizarModoTelaCheia(ativo) {
+  document.body.classList.toggle("modo-tela-cheia", ativo);
+  $("#modo-tela-cheia").hidden = ativo;
+  $("#modo-tela-cheia").setAttribute("aria-pressed", String(ativo));
+  $("#sair-tela-cheia").hidden = !ativo;
+}
+
+async function entrarTelaCheia() {
+  atualizarModoTelaCheia(true);
+  if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+    try {
+      await document.documentElement.requestFullscreen();
+      $("#modo-aviso").hidden = true;
+    } catch {
+      $("#modo-aviso").textContent = "Modo expandido ativo; o navegador não permitiu ocultar as barras.";
+      $("#modo-aviso").hidden = false;
+    }
+  }
+}
+
+async function sairTelaCheia() {
+  if (document.fullscreenElement && document.exitFullscreen) {
+    await document.exitFullscreen();
+  } else {
+    atualizarModoTelaCheia(false);
+  }
+  $("#modo-aviso").hidden = true;
+}
+
 function mostrarErros(erros) {
   editor.marcarErros(erros);
   const lista = $("#erros");
@@ -683,6 +712,11 @@ for (const aba of document.querySelectorAll(".aba")) {
 
 $("#executar").addEventListener("click", executar);
 $("#abrir-manual").addEventListener("click", abrirManual);
+$("#modo-tela-cheia").addEventListener("click", entrarTelaCheia);
+$("#sair-tela-cheia").addEventListener("click", sairTelaCheia);
+document.addEventListener("fullscreenchange", () => {
+  if (!document.fullscreenElement) atualizarModoTelaCheia(false);
+});
 for (const botao of document.querySelectorAll("[data-fechar-manual]")) {
   botao.addEventListener("click", () => $("#manual").close());
 }

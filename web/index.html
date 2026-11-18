@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">
-  <link rel="stylesheet" href="estilo.css">
+  <link rel="stylesheet" href="estilo.css?v=focus-mode-1">
 </head>
 <body>
   <header class="topo">
@@ -29,6 +29,7 @@
       <button type="button" id="abrir-manual" class="secundario">Manual</button>
       <button type="button" id="exportar-registro" class="secundario" hidden>Exportar registro</button>
       <button type="button" id="carregar-replay" class="secundario" hidden>Replay salvo</button>
+      <button type="button" id="modo-tela-cheia" class="secundario" aria-pressed="false">Tela cheia</button>
       <div class="velocidade" role="group" aria-label="Velocidade das animações">
         <button type="button" data-velocidade="0.5">0,5×</button>
         <button type="button" data-velocidade="1" class="ativo">1×</button>
@@ -60,6 +61,8 @@
           <kbd>Ctrl</kbd><kbd>Enter</kbd>
         </button>
         <button type="button" id="automatico" class="secundario" hidden>Automático</button>
+        <button type="button" id="sair-tela-cheia" class="secundario" hidden>Sair da tela cheia</button>
+        <span id="modo-aviso" class="modo-aviso" hidden></span>
       </div>
       <ul id="erros" class="erros" hidden></ul>
       <details class="referencia" open>
@@ -178,6 +181,7 @@ aircraft Hawk { missile Ferrao }</code></pre>
         <p>O mapa vai de 0 a 199 em x e de 0 a 99 em y; cada célula tem 10 de lado. Cada unidade enxerga só 2 casas ao redor, e a IA também: ela não vê através da névoa. Quando perde você de vista, ela calcula onde você provavelmente está e vai procurar lá, usando sonar. Mudar de posição e se esconder funciona. Passe o mouse no mapa para ver as coordenadas e clique numa célula para inseri-las no editor. Clicar no nome de uma unidade ou arma também insere o nome.</p>
         <p>Enquanto você digita, o editor sugere o próximo pedaço do comando: tipos e armas no cenário; unidades, armas, alvos, coordenadas e atributos no turno. Use as setas e <kbd>Enter</kbd> ou <kbd>Tab</kbd> para aceitar, ou <kbd>Ctrl</kbd> + <kbd>Espaço</kbd> para abrir as sugestões.</p>
         <p>Erros de digitação, de sintaxe e de regras aparecem sublinhados na linha do editor. <kbd>Ctrl</kbd> + <kbd>Enter</kbd> executa a aba aberta.</p>
+        <p>O botão <b>Tela cheia</b> deixa o mapa à direita e o editor com os botões de execução à esquerda. Pressione <kbd>Esc</kbd> ou <b>Sair da tela cheia</b> para voltar.</p>
       </section>
     </div>
     <footer>
@@ -202,6 +206,6 @@ aircraft Hawk { missile Ferrao }</code></pre>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/mode/simple.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/display/placeholder.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>
-  <script type="module" src="app.js?v=unit-sprites-1"></script>
+  <script type="module" src="app.js?v=focus-mode-1"></script>
 </body>
 </html>
