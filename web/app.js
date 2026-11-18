@@ -26,6 +26,12 @@ const jogo = {
   automatico: false,
 };
 
+const previsao = {
+  atacante: null,
+  arma: null,
+  alvo: null,
+};
+
 function ler(chave) {
   try {
     return localStorage.getItem(chave);
@@ -217,7 +223,9 @@ function atualizarUnidades(estado) {
     const proporcao = u.hp_max ? Math.max(0, Math.min(1, u.hp / u.hp_max)) : 0;
     const armas = oculto ? "" : u.armas.map((arma) => `
       <li>
-        <button type="button" class="inserir" data-inserir="${escapar(arma.nome)}">${escapar(arma.nome)}</button>
+        ${u.lado === "jogador"
+          ? `<button type="button" class="prever-arma ${previsao.atacante === u.nome && previsao.arma === arma.nome ? "selecionado" : ""}" data-inserir="${escapar(arma.nome)}" data-prever-arma="${escapar(u.nome)}" data-prever-nome="${escapar(arma.nome)}" title="Prever combate e inserir no editor">${escapar(arma.nome)}</button>`
+          : `<button type="button" class="inserir" data-inserir="${escapar(arma.nome)}">${escapar(arma.nome)}</button>`}
         <span>${arma.tipo} · dano ${arma.dano} · alcance ${arma.alcance}</span>
         <span class="municao" title="munição">${pontos(arma.municao)}</span>
         ${arma.recarga > 0 ? `<span class="recarga">recarga ${arma.recarga}</span>` : ""}
@@ -232,6 +240,9 @@ function atualizarUnidades(estado) {
         <header>
           <button type="button" class="inserir nome" data-inserir="${escapar(u.nome)}">${escapar(u.nome)}</button>
           <span class="tipo">${NOMES_DOS_TIPOS[u.tipo] || u.tipo}</span>
+          ${u.lado === "inimigo" && u.visivel
+            ? `<button type="button" class="prever-alvo ${previsao.alvo === u.nome ? "selecionado" : ""}" data-prever-alvo="${escapar(u.nome)}" title="Usar como alvo da previsão">prever alvo</button>`
+            : ""}
         </header>
         ${oculto ? "" : `<div class="vida" role="meter" aria-valuemin="0" aria-valuemax="${u.hp_max}" aria-valuenow="${u.hp}" aria-label="HP de ${escapar(u.nome)}">
           <div style="width:${proporcao * 100}%" class="${proporcao > 0.6 ? "alta" : proporcao > 0.3 ? "media" : "baixa"}"></div>
@@ -241,6 +252,102 @@ function atualizarUnidades(estado) {
         ${armas ? `<ul class="armas">${armas}</ul>` : ""}
       </article>`;
   }).join("");
+  atualizarPrevisao();
+}
+
+function terrenoDaCelula(unidade) {
+  if (!mapa || unidade?.x === null || unidade?.y === null) return ".";
+  const gx = Math.max(0, Math.min(mapa.largura - 1, Math.floor(unidade.x / 10)));
+  const gy = Math.max(0, Math.min(mapa.altura - 1, Math.floor(unidade.y / 10)));
+  return mapa.terreno[gy]?.[gx] || ".";
+}
+
+function calcularPrevisao() {
+  if (!jogo.estado || !previsao.atacante || !previsao.arma || !previsao.alvo) return null;
+
+  const atacante = jogo.estado.unidades.find((u) => u.nome === previsao.atacante && u.lado === "jogador");
+  const alvo = jogo.estado.unidades.find((u) => u.nome === previsao.alvo && u.lado === "inimigo");
+  const arma = atacante?.armas.find((u) => u.nome === previsao.arma);
+  if (!atacante || !alvo || !arma || alvo.x === null || alvo.y === null) return null;
+
+  const distancia = Math.hypot(alvo.x - atacante.x, alvo.y - atacante.y);
+  const bloqueios = [];
+  if (!alvo.visivel) bloqueios.push("O alvo está fora da visão da sua equipe.");
+  if (arma.recarga > 0) bloqueios.push(`A arma está em recarga por ${arma.recarga} turno${arma.recarga > 1 ? "s" : ""}.`);
+  if (arma.municao <= 0) bloqueios.push("A arma está sem munição.");
+  if (distancia > arma.alcance) bloqueios.push(`O alvo está a ${Math.round(distancia)} de alcance; a arma alcança ${arma.alcance}.`);
+  if (alvo.tipo === "submarine" && alvo.profundidade > 0 && arma.tipo !== "torpedo") {
+    bloqueios.push("Somente torpedos atingem submarinos submersos.");
+  }
+  if (alvo.tipo === "aircraft" && arma.tipo === "torpedo") {
+    bloqueios.push("Torpedos não atingem aeronaves.");
+  }
+
+  let dano = Math.max(1, Math.floor((arma.dano - alvo.armadura) * 1));
+  let cobertura = "Nenhuma";
+  const terreno = terrenoDaCelula(alvo);
+  if (terreno === "#" && alvo.tipo !== "aircraft") {
+    dano = Math.max(1, Math.floor(dano * 0.5));
+    cobertura = "Ruínas · dano 50%";
+  }
+  if (alvo.exposto) {
+    dano *= 2;
+  }
+
+  const chance = bloqueios.length === 0 && dano >= alvo.hp ? 100 : 0;
+  const modificadores = [];
+  if (terreno === "#") modificadores.push(alvo.tipo === "aircraft" ? "Aeronave não se abriga em ruínas" : "Cobertura em ruínas");
+  if (alvo.tipo === "submarine" && alvo.profundidade > 0) modificadores.push(`Submerso ${alvo.profundidade}m`);
+  if (alvo.exposto) modificadores.push("Exposto · dano dobrado");
+  if (atacante.tipo === "submarine" && atacante.profundidade > 0) modificadores.push("Ataque submerso revelará o submarino");
+
+  return {
+    atacante,
+    alvo,
+    arma,
+    distancia: Math.round(distancia),
+    dano,
+    cobertura,
+    chance,
+    bloqueios,
+    modificadores,
+  };
+}
+
+function atualizarPrevisao() {
+  if (!jogo.estado) return;
+
+  const nomes = new Set(jogo.estado.unidades.map((u) => u.nome));
+  if (!nomes.has(previsao.atacante)) previsao.atacante = null;
+  if (!nomes.has(previsao.alvo)) previsao.alvo = null;
+
+  const resultado = calcularPrevisao();
+  const painel = $("#previsao");
+  if (!resultado) {
+    painel.innerHTML = '<p class="previsao-vazia">Selecione uma arma do seu exército e um alvo vermelho visível no mapa.</p>';
+    return;
+  }
+
+  const hpRestante = Math.max(0, resultado.alvo.hp - resultado.dano);
+  painel.innerHTML = `
+    <div class="previsao-cabecalho">
+      <span>${escapar(resultado.atacante.nome)} → ${escapar(resultado.alvo.nome)}</span>
+      <small>${escapar(resultado.arma.tipo)}</small>
+    </div>
+    <div class="previsao-probabilidade">
+      <div class="previsao-barra"><div style="width:${resultado.chance}%"></div></div>
+      <strong class="${resultado.chance ? "" : "impossivel"}">${resultado.chance}% destruir</strong>
+    </div>
+    <dl class="previsao-detalhes">
+      <div><dt>Dano estimado</dt><dd>${resultado.dano}</dd></div>
+      <div><dt>HP restante</dt><dd>${resultado.bloqueios.length ? "não aplicável" : `${hpRestante}/${resultado.alvo.hp_max}`}</dd></div>
+      <div><dt>Distância</dt><dd>${resultado.distancia} / ${resultado.arma.alcance}</dd></div>
+      <div><dt>Munição</dt><dd>${resultado.arma.municao} · recarga ${resultado.arma.recarga}</dd></div>
+      <div><dt>Cobertura</dt><dd>${escapar(resultado.cobertura)}</dd></div>
+      <div><dt>Modificadores</dt><dd>${escapar(resultado.modificadores.join(" · ") || "Nenhum")}</dd></div>
+    </dl>
+    ${resultado.bloqueios.length ? `<ul class="previsao-bloqueios">${resultado.bloqueios.map((texto) => `<li>${escapar(texto)}</li>`).join("")}</ul>` : ""}
+  `;
 }
 
 function atualizarTrechos() {
@@ -425,6 +532,26 @@ for (const botao of document.querySelectorAll("[data-velocidade]")) {
 }
 
 document.addEventListener("click", (evento) => {
+  const preverArma = evento.target.closest("[data-prever-arma]");
+  if (preverArma) {
+    previsao.atacante = preverArma.dataset.preverArma;
+    previsao.arma = preverArma.dataset.preverNome;
+    const alvo = jogo.estado?.unidades.find((u) => u.lado === "inimigo" && u.visivel && u.vivo);
+    if (alvo) previsao.alvo = alvo.nome;
+    atualizarPrevisao();
+  }
+  const preverAlvo = evento.target.closest("[data-prever-alvo]");
+  if (preverAlvo) {
+    previsao.alvo = preverAlvo.dataset.preverAlvo;
+    if (!previsao.atacante) {
+      const atacante = jogo.estado?.unidades.find((u) => u.lado === "jogador" && u.vivo && u.armas.length);
+      if (atacante) {
+        previsao.atacante = atacante.nome;
+        previsao.arma = atacante.armas[0].nome;
+      }
+    }
+    atualizarPrevisao();
+  }
   const inserir = evento.target.closest("[data-inserir]");
   if (inserir && !jogo.ocupado) editor.inserir(`${inserir.dataset.inserir} `);
   const trecho = evento.target.closest("[data-codigo]");

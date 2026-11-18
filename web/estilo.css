@@ -891,6 +891,117 @@ li.CodeMirror-hint-active {
   color: var(--inimigo);
 }
 
+.registro-titulo {
+  margin-top: 16px !important;
+  padding-top: 12px;
+  border-top: 1px solid var(--borda);
+}
+
+.previsao {
+  min-height: 104px;
+  padding: 10px;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  background: var(--painel-2);
+  font-size: 12px;
+}
+
+.previsao-vazia {
+  margin: 0;
+  color: var(--suave);
+}
+
+.previsao-cabecalho,
+.previsao-probabilidade,
+.previsao-detalhes {
+  display: grid;
+  gap: 6px;
+}
+
+.previsao-cabecalho {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  margin-bottom: 8px;
+  font-family: var(--titulo);
+  font-weight: 700;
+}
+
+.previsao-probabilidade {
+  grid-template-columns: 1fr 90px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.previsao-barra {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #ece7dc;
+}
+
+.previsao-barra div {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--sucesso);
+}
+
+.previsao-probabilidade strong {
+  text-align: right;
+  color: var(--sucesso);
+  font-family: var(--mono);
+}
+
+.previsao-probabilidade strong.impossivel {
+  color: var(--inimigo);
+}
+
+.previsao-detalhes {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.previsao-detalhes div {
+  padding: 5px 7px;
+  border: 1px solid rgba(221, 214, 198, 0.75);
+  border-radius: 6px;
+  background: var(--painel);
+}
+
+.previsao-detalhes dt {
+  color: var(--suave);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.previsao-detalhes dd {
+  margin: 1px 0 0;
+  font-family: var(--mono);
+  font-weight: 600;
+}
+
+.previsao-bloqueios {
+  margin: 8px 0 0;
+  padding-left: 16px;
+  color: var(--inimigo);
+}
+
+.prever-alvo,
+.prever-arma {
+  padding: 1px 7px;
+  border: 1px solid var(--borda);
+  border-radius: 5px;
+  background: var(--painel-2);
+  color: var(--suave);
+  font-size: 11px;
+}
+
+.prever-alvo.selecionado,
+.prever-arma.selecionado {
+  border-color: var(--destaque);
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--destaque);
+}
+
 /* ---------- registro ---------- */
 
 .registro {
