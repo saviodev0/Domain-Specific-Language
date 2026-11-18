@@ -58,3 +58,9 @@
 - Tanques e submarinos pulavam ilhas; agora param antes delas. O posicionamento inicial continua livre.
 - A partida podia não terminar nunca; agora empata quando ninguém consegue mais ferir o outro ou após 50 turnos.
 - `dive` com profundidade 0 era aceito, `attack` usava a primeira arma mesmo em recarga, e uma requisição com tamanho negativo travava uma thread do servidor. Os três foram corrigidos.
+
+## 2026-11-16 (ajustes de jogabilidade)
+
+- Jogando, apareceram dois enganos comuns com mensagens difíceis do ANTLR: escrever a unidade antes do comando (`Corvo fire ...`) e o tipo da arma no lugar do nome (`fire Corvo missile Vespa`). As duas mensagens agora dizem como corrigir, e na partida a segunda também lista as armas da unidade.
+- Ao começar uma batalha com outro exército, o `turno.tank` guardava ordens para unidades que não existiam mais. Agora ele é refeito nesse caso (Ctrl+Z recupera o anterior), e a linha "Você comanda" é atualizada.
+- O editor passou a colorir `aircraft` e `missile` como as outras declarações, e os nomes escolhidos pelo jogador ganharam cor própria.

@@ -20,6 +20,7 @@ LIMITE_DE_INSTRUCOES = 500
 LIMITE_DE_TURNOS = 50
 
 _POSICAO = re.compile(r"[Ll]inha (\d+), coluna (\d+)")
+_TIPO_NO_LUGAR_DO_NOME = re.compile(r"use 'attack (\w+) alvo'")
 _DISPARO = re.compile(r"\[FIRE SUCESSO\] \w+ usou \w+ em (\w+)! (Dano: \d+ \(HP: \d+\))")
 
 
@@ -347,6 +348,15 @@ class Partida:
                                sonar_recarga=None, exposto=False, detectado=False, armas=[])
         return estado
 
+    def _com_nomes_das_armas(self, mensagem: str) -> str:
+        """Quando o jogador escreve o tipo da arma no fire, mostra os nomes que ele deu às armas da unidade."""
+        tipo_no_lugar = _TIPO_NO_LUGAR_DO_NOME.search(mensagem)
+        unidade = self.interpretador.units.get(tipo_no_lugar[1]) if tipo_no_lugar else None
+        if unidade is None or not unidade.weapons:
+            return mensagem
+        armas = ", ".join(f"{arma['name']} ({arma['kind']})" for arma in unidade.weapons)
+        return f"{mensagem}. Armas de {unidade.name}: {armas}"
+
     def mapa(self) -> Dict[str, Any]:
         return descrever_mapa(self.renderer)
 
@@ -364,7 +374,10 @@ class Partida:
             raise ErroDaPartida(f"A partida terminou; a equipe '{self.vencedor}' venceu")
         if self.motivo_do_empate is not None:
             raise ErroDaPartida(f"A partida terminou empatada: {self.motivo_do_empate}")
-        _verificar(codigo, AnalisadorDaPartida(self.renderer, base=self.tabela, comandaveis=set(self.comandaveis)))
+        try:
+            _verificar(codigo, AnalisadorDaPartida(self.renderer, base=self.tabela, comandaveis=set(self.comandaveis)))
+        except SyntaxError as erro:
+            raise SyntaxError(self._com_nomes_das_armas(str(erro))) from None
         ast = _ast(codigo)
         self.turno += 1
 

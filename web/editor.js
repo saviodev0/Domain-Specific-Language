@@ -4,7 +4,7 @@ CodeMirror.defineSimpleMode("tankscript", {
   start: [
     { regex: /#.*/, token: "comment" },
     { regex: /"(?:[^\\"]|\\.)*"?|'(?:[^\\']|\\.)*'?/, token: "string" },
-    { regex: /(?:tank|submarine|gun|torpedo|team|battle|vs)\b/, token: "keyword" },
+    { regex: /(?:tank|submarine|aircraft|gun|torpedo|missile|team|battle|vs)\b/, token: "keyword" },
     { regex: /(?:move|attack|fire|dive|surface|sonar)\b/, token: "builtin" },
     { regex: /(?:if|repeat)\b/, token: "atom" },
     { regex: new RegExp(`(\\.)(${PROPRIEDADES}|x|y)\\b`), token: ["operator", "attribute"] },

@@ -170,7 +170,9 @@ if 1 < 2 < 3 { sonar Tank1 }                   # inválido: comparação encadea
 repeat 1 { tank Tank1 {} }                     # inválido: declaração dentro do bloco
 ```
 
-Os dois parsers informam linha e coluna. O parser ANTLR usa as mensagens padrão da ferramenta, por exemplo `Linha 1, coluna 10: mismatched input '<' expecting '{'`: o token entre aspas depois de `input` é o que foi encontrado, e o `expecting` diz o que a regra esperava naquele ponto.
+Para dois enganos comuns, a mensagem do ANTLR é reescrita em `tankscript/arvore.py`: unidade antes do comando (`Corvo fire ...` vira "o comando vem antes da unidade: escreva 'fire Corvo ...'") e tipo da arma no lugar do nome (`fire Corvo missile Vespa` explica que o `fire` pede o nome da arma e sugere o `attack`; na partida, a mensagem também lista as armas da unidade).
+
+Os dois parsers informam linha e coluna. Nos demais casos, o parser ANTLR usa as mensagens padrão da ferramenta, por exemplo `Linha 1, coluna 10: mismatched input '<' expecting '{'`: o token entre aspas depois de `input` é o que foi encontrado, e o `expecting` diz o que a regra esperava naquele ponto.
 
 Execute os testes do parser com `python -m pytest tests/test_parser.py` e a suíte completa com `python -m pytest`.
 

@@ -60,6 +60,32 @@ def test_invalid_turn_programs_are_rejected_with_location(codigo, mensagem):
     assert jogo.turno == 0
 
 
+@pytest.mark.parametrize(
+    ("codigo", "mensagem"),
+    [
+        ("Rex fire G Alvo", "Linha 1, coluna 1: o comando vem antes da unidade: escreva 'fire Rex ...' em vez de 'Rex fire ...'"),
+        ("Rex move 10 10", "Linha 1, coluna 1: o comando vem antes da unidade: escreva 'move Rex ...'"),
+        ("fire Rex gun Alvo", "Linha 1, coluna 10: 'gun' é o tipo da arma; o fire pede o nome dela"),
+    ],
+)
+def test_common_beginner_mistakes_get_clear_messages(codigo, mensagem):
+    jogo = partida(f"tank Rex {{ gun G }} {ALVO_LONGE}", "Rex", "Alvo", "move Alvo 190 90")
+
+    with pytest.raises(SyntaxError) as excinfo:
+        jogo.jogar_turno(codigo)
+
+    assert mensagem in str(excinfo.value)
+
+
+def test_weapon_type_mistake_lists_the_unit_weapons():
+    jogo = partida(f"tank Rex {{ gun Canhao gun Reserva }} {ALVO_LONGE}", "Rex", "Alvo", "move Alvo 190 90")
+
+    with pytest.raises(SyntaxError) as excinfo:
+        jogo.jogar_turno("fire Rex gun Alvo")
+
+    assert str(excinfo.value).endswith("Armas de Rex: Canhao (gun), Reserva (gun)")
+
+
 # ---------- movimento e terreno ----------
 
 def test_move_beyond_speed_stops_halfway():

@@ -413,6 +413,28 @@ function modeloDoTurno(partida) {
   return `${linhas.join("\n")}\n`;
 }
 
+/** Unidades que o rascunho do turno comanda e que não fazem parte do exército atual. */
+function unidadesQueSairam(texto, comandaveis) {
+  const comandadas = [...texto.replace(/#.*$/gm, "").matchAll(/\b(?:move|attack|fire|dive|surface|sonar)\s+([A-Za-z_]\w*)/g)]
+    .map((encontrado) => encontrado[1]);
+  return [...new Set(comandadas.filter((nome) => !comandaveis.includes(nome)))];
+}
+
+function prepararTurno(dados) {
+  const rascunho = editor.texto("turno");
+  const sairam = unidadesQueSairam(rascunho, dados.comandaveis);
+  if (!rascunho.trim() || sairam.length) {
+    // setValue entra no histórico do editor: Ctrl+Z na aba do turno traz o rascunho anterior de volta
+    editor.definir("turno", modeloDoTurno(dados));
+    if (sairam.length) {
+      registrar(`O turno.tank comandava ${sairam.join(", ")}, que não estão neste exército; ele foi refeito (Ctrl+Z recupera o anterior).`, "sistema");
+    }
+    return;
+  }
+  const atualizado = rascunho.replace(/^# Você comanda: .*$/m, `# Você comanda: ${dados.comandaveis.join(", ")}.`);
+  if (atualizado !== rascunho) editor.definir("turno", atualizado);
+}
+
 async function iniciarBatalha() {
   const { ok, dados } = await chamar("/api/partidas", editor.texto("cenario"));
   if (!ok) return mostrarErros(dados.erros);
@@ -432,7 +454,7 @@ async function iniciarBatalha() {
 
   await reproduzir(dados.eventos);
 
-  if (!editor.texto("turno").trim()) editor.definir("turno", modeloDoTurno(dados));
+  prepararTurno(dados);
   if (dados.empate) {
     definirFase("fim", "Empate");
     ocupar(false);
