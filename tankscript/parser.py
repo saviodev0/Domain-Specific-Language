@@ -8,6 +8,11 @@ class Parser:
         TokenType.TANK,
         TokenType.SUBMARINE,
         TokenType.AIRCRAFT,
+        TokenType.DRONE,
+        TokenType.WARSHIP,
+        TokenType.NAVIO_GUERRA,
+        TokenType.MISSILE_LAUNCHER,
+        TokenType.LANCA_MISSIL,
         TokenType.TEAM,
         TokenType.BATTLE,
     )
@@ -97,6 +102,12 @@ class Parser:
             return self.parse_unit_declaration("SubmarineDeclaration")
         if token.type is TokenType.AIRCRAFT:
             return self.parse_unit_declaration("AircraftDeclaration")
+        if token.type is TokenType.DRONE:
+            return self.parse_unit_declaration("DroneDeclaration")
+        if token.type in (TokenType.WARSHIP, TokenType.NAVIO_GUERRA):
+            return self.parse_unit_declaration("WarshipDeclaration")
+        if token.type in (TokenType.MISSILE_LAUNCHER, TokenType.LANCA_MISSIL):
+            return self.parse_unit_declaration("MissileLauncherDeclaration")
         if token.type is TokenType.TEAM:
             return self.parse_team()
         if token.type is TokenType.BATTLE:

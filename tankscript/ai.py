@@ -102,7 +102,7 @@ class EnemyAI:
                 if not (0 <= x < width * 10 and 0 <= y < height * 10):
                     continue
                 cell = (int(x // 10), int(y // 10))
-                if renderer and enemy.kind != "aircraft" and renderer.terrain[cell[1]][cell[0]].strip() == "I":
+                if renderer and enemy.kind not in ("aircraft", "drone") and renderer.terrain[cell[1]][cell[0]].strip() == "I":
                     continue
                 weight = 1.0
                 if cell in seen:
@@ -164,7 +164,7 @@ class EnemyAI:
     def _can_hurt(weapon, target) -> bool:
         if target.kind == "submarine" and target.depth > 0 and weapon["kind"] != "torpedo":
             return False
-        if target.kind == "aircraft" and weapon["kind"] == "torpedo":
+        if target.kind in ("aircraft", "drone") and weapon["kind"] == "torpedo":
             return False
         return True
 
@@ -175,7 +175,7 @@ class EnemyAI:
     def _expected_damage(self, interpreter, weapon, target) -> float:
         damage = max(1, weapon["properties"]["damage"] - target.armor)
         renderer = interpreter.renderer
-        if renderer and target.kind != "aircraft" and renderer.get_terrain_at(target.x, target.y) == "#":
+        if renderer and target.kind not in ("aircraft", "drone") and renderer.get_terrain_at(target.x, target.y) == "#":
             damage = max(1, int(damage * 0.5))
         return damage * (2 if target.exposed else 1)
 
@@ -279,7 +279,7 @@ class EnemyAI:
             y = round(min(max(unit.y + math.sin(angle + offset) * step, 0), height - 1))
             if (x, y) == (round(unit.x), round(unit.y)):
                 continue
-            if renderer and unit.kind != "aircraft" and renderer.get_terrain_at(x, y) == "I":
+            if renderer and unit.kind not in ("aircraft", "drone") and renderer.get_terrain_at(x, y) == "I":
                 continue
             interpreter.execute_statement({"type": "MoveStatement", "unit": unit.name, "x": x, "y": y})
             return

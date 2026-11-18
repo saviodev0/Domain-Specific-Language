@@ -53,6 +53,7 @@ class AnalisadorSemantico(TankScriptParserVisitor):
     def visitUnidade(self, ctx: TankScriptParser.UnidadeContext):
         nome = ctx.IDENTIFIER()
         tipo = ctx.getChild(0).getText()
+        tipo = {"navio_guerra": "warship", "lanca_missil": "missile_launcher"}.get(tipo, tipo)
         unidade = Unidade(tipo)
         self._rejeitar_propriedades(ctx.propriedade(), tipo, {atributo: UNIDADES[tipo][atributo] for atributo in ATRIBUTOS})
 

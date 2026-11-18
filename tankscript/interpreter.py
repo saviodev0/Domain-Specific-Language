@@ -49,6 +49,9 @@ class Interpreter:
         "TankDeclaration": "tank",
         "SubmarineDeclaration": "submarine",
         "AircraftDeclaration": "aircraft",
+        "DroneDeclaration": "drone",
+        "WarshipDeclaration": "warship",
+        "MissileLauncherDeclaration": "missile_launcher",
     }
 
     def __init__(self, ast: Dict[str, Any], renderer: GridRenderer = None):
@@ -111,7 +114,7 @@ class Interpreter:
 
                 # Regra de Terreno: Ilha ("I") bloqueia o caminho, exceto de aeronaves. No posicionamento
                 # inicial, antes do primeiro turno, a unidade só não pode começar em cima da ilha.
-                if self.renderer and unit.kind != "aircraft":
+                if self.renderer and unit.kind not in ("aircraft", "drone"):
                     if math.isinf(unit.movement_left):
                         stop = (round(unit.x), round(unit.y)) if self.renderer.get_terrain_at(x, y) == "I" else None
                     else:
@@ -255,7 +258,7 @@ class Interpreter:
         if target.kind == "submarine" and target.depth > 0 and weapon["kind"] != "torpedo":
             print("[FIRE INEFICAZ] Só torpedos atingem submarinos submersos!")
             return
-        if target.kind == "aircraft" and weapon["kind"] == "torpedo":
+        if target.kind in ("aircraft", "drone") and weapon["kind"] == "torpedo":
             print("[FIRE INEFICAZ] Torpedos não atingem aeronaves!")
             return
 
@@ -265,7 +268,7 @@ class Interpreter:
 
         # Modificador de Terreno (# Ruínas/Cobertura reduz dano em 50%)
         defense_mult = 1.0
-        if self.renderer and target.kind != "aircraft" and self.renderer.get_terrain_at(target.x, target.y) == "#":
+        if self.renderer and target.kind not in ("aircraft", "drone") and self.renderer.get_terrain_at(target.x, target.y) == "#":
             defense_mult = 0.5
             print(f"🛡️  [COBERTURA] {target.name} está em Ruínas/Cobertura (#) e reduz o dano em 50%!")
 

@@ -243,7 +243,19 @@ class CenaArena extends Phaser.Scene {
     torre.clear();
     sombra.clear();
 
-    if (unidade.tipo === "aircraft") {
+    if (unidade.tipo === "drone") {
+      if (unidade.vivo) sombra.fillStyle(0x000000, 0.3).fillEllipse(3, 10, 28, 12);
+      for (const [x, y] of [[-13, -12], [13, -12], [-13, 12], [13, 12]]) {
+        corpo.lineStyle(3, escura, 1).lineBetween(0, 0, x, y);
+        corpo.fillStyle(escura, 0.5).fillCircle(x, y, 7);
+        corpo.lineStyle(1.5, escura, 0.9).strokeCircle(x, y, 7);
+      }
+      corpo.fillStyle(cor).fillRoundedRect(-8, -8, 16, 16, 5);
+      corpo.lineStyle(2, escura, 1).strokeRoundedRect(-8, -8, 16, 16, 5);
+      corpo.fillStyle(0xe8f6ff, 0.95).fillCircle(0, 0, 3.5);
+      torre.fillStyle(escura).fillRoundedRect(-3, 8, 6, 9, 2);
+      torre.fillStyle(0xfde68a).fillCircle(0, 17, 3);
+    } else if (unidade.tipo === "aircraft") {
       if (unidade.vivo) sombra.fillStyle(0x000000, 0.35).fillEllipse(6, 14, 30, 9);
       corpo.fillStyle(escura).fillPoints([
         { x: 3, y: 0 }, { x: -7, y: -19 }, { x: -12, y: -19 }, { x: -6, y: 0 }, { x: -12, y: 19 }, { x: -7, y: 19 },
@@ -251,6 +263,25 @@ class CenaArena extends Phaser.Scene {
       corpo.fillStyle(escura).fillTriangle(-14, 0, -20, -8, -20, 8);
       corpo.fillStyle(cor).fillEllipse(0, 0, 34, 8);
       corpo.fillStyle(0xe8f6ff, 0.9).fillEllipse(9, 0, 7, 4);
+    } else if (unidade.tipo === "warship") {
+      if (unidade.vivo) sombra.fillStyle(0x000000, 0.32).fillEllipse(3, 7, 48, 22);
+      corpo.fillStyle(escura).fillPoints([
+        { x: 25, y: 0 }, { x: 14, y: -8 }, { x: -15, y: -8 },
+        { x: -23, y: -4 }, { x: -23, y: 4 }, { x: -15, y: 8 }, { x: 14, y: 8 },
+      ], true);
+      corpo.fillStyle(cor).fillPoints([
+        { x: 22, y: 0 }, { x: 12, y: -6 }, { x: -14, y: -6 },
+        { x: -19, y: -3 }, { x: -19, y: 3 }, { x: -14, y: 6 }, { x: 12, y: 6 },
+      ], true);
+      corpo.lineStyle(1.5, escura, 1).lineBetween(-15, 0, 20, 0);
+      corpo.fillStyle(0xdbeafe).fillRoundedRect(-8, -4, 17, 8, 2);
+      corpo.fillStyle(escura).fillRect(-3, -2, 8, 4);
+      torre.fillStyle(escura).fillCircle(11, 0, 4.5);
+      torre.fillStyle(cor).fillCircle(11, 0, 2.5);
+      torre.fillStyle(escura).fillRect(11, -1.5, 12, 3);
+      torre.fillStyle(escura).fillCircle(-11, 0, 4);
+      torre.fillStyle(cor).fillCircle(-11, 0, 2.2);
+      torre.fillStyle(escura).fillRect(-21, -1, 10, 2);
     } else if (unidade.tipo === "tank") {
       corpo.fillStyle(0x374151).fillRoundedRect(-17, -15, 34, 8, 3).fillRoundedRect(-17, 7, 34, 8, 3);
       corpo.fillStyle(cor).fillRoundedRect(-14, -10, 28, 20, 5);
@@ -258,6 +289,21 @@ class CenaArena extends Phaser.Scene {
       torre.fillStyle(escura).fillRect(0, -2.5, 20, 5);
       torre.fillStyle(escura).fillCircle(0, 0, 7.5);
       torre.lineStyle(2, cor, 1).strokeCircle(0, 0, 7.5);
+    } else if (unidade.tipo === "missile_launcher") {
+      if (unidade.vivo) sombra.fillStyle(0x000000, 0.32).fillEllipse(2, 11, 38, 12);
+      corpo.fillStyle(0x374151).fillRoundedRect(-19, -13, 38, 7, 3).fillRoundedRect(-19, 6, 38, 7, 3);
+      corpo.fillStyle(cor).fillRoundedRect(-15, -8, 30, 16, 4);
+      corpo.lineStyle(2, escura, 1).strokeRoundedRect(-15, -8, 30, 16, 4);
+      for (const x of [-11, -3, 5, 13]) {
+        corpo.fillStyle(0x1f2937).fillCircle(x, -10, 2);
+        corpo.fillStyle(0x1f2937).fillCircle(x, 10, 2);
+      }
+      torre.fillStyle(escura).fillRoundedRect(-8, -10, 18, 20, 3);
+      torre.lineStyle(2, cor, 1).strokeRoundedRect(-8, -10, 18, 20, 3);
+      for (const y of [-5, 0, 5]) {
+        torre.fillStyle(0x1f2937).fillRoundedRect(-5, y - 1.5, 20, 3, 1.5);
+        torre.fillStyle(0xfde68a).fillCircle(15, y, 1.2);
+      }
     } else {
       corpo.fillStyle(escura).fillRect(-24, -4, 5, 8);
       corpo.fillStyle(cor).fillEllipse(0, 0, 42, 16);
@@ -375,10 +421,10 @@ class CenaArena extends Phaser.Scene {
     if (distancia < 1) return this.esperar(80);
 
     visual.container.setVisible(true);
-    if (atual.tipo === "tank" || atual.tipo === "aircraft") {
+    if (["aircraft", "drone", "warship", "missile_launcher"].includes(atual.tipo)) {
       const angulo = Phaser.Math.Angle.Between(visual.container.x, visual.container.y, destino.x, destino.y);
       visual.corpo.setRotation(angulo);
-      visual.torre.setRotation(angulo);
+      if (atual.tipo === "aircraft" || atual.tipo === "drone") visual.torre.setRotation(angulo);
     } else {
       visual.corpo.setScale(destino.x < visual.container.x ? -1 : 1, 1);
     }
@@ -417,6 +463,9 @@ class CenaArena extends Phaser.Scene {
         await this.tween({ targets: origem.torre, rotation: angulo, duration: 160 });
       } else if (unidadeAtacante.tipo === "aircraft") {
         await this.tween({ targets: origem.corpo, rotation: angulo, duration: 160 });
+      } else if (unidadeAtacante.tipo === "drone" || unidadeAtacante.tipo === "warship"
+        || unidadeAtacante.tipo === "missile_launcher") {
+        await this.tween({ targets: origem.torre, rotation: angulo, duration: 160 });
       }
       const clarao = this.add.circle(de.x + Math.cos(angulo) * 20, de.y + Math.sin(angulo) * 20, 7, 0xffe08a).setDepth(20);
       this.tween({ targets: clarao, scale: 2.2, alpha: 0, duration: 180 }).then(() => clarao.destroy());

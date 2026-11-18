@@ -69,6 +69,15 @@ class GridRenderer:
             elif unit.kind == "aircraft":
                 color = "\033[92m" if is_player_unit else "\033[91m"
                 icon = f"{color} A \033[0m"
+            elif unit.kind == "drone":
+                color = "\033[92m" if is_player_unit else "\033[91m"
+                icon = f"{color} D \033[0m"
+            elif unit.kind == "warship":
+                color = "\033[96m" if is_player_unit else "\033[93m"
+                icon = f"{color} W \033[0m"
+            elif unit.kind == "missile_launcher":
+                color = "\033[95m" if is_player_unit else "\033[91m"
+                icon = f"{color} ML\033[0m"
             else:
                 color = "\033[96m" if is_player_unit else "\033[93m"
                 icon = f"{color}~S~\033[0m" if unit.depth > 0 else f"{color} S \033[0m"

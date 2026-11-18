@@ -6,6 +6,9 @@ UNIDADES = {
     "tank": {"hp": 120, "armor": 15, "speed": 30, "radar": 20, "sonar": 30, "custo": 4, "armas": ("gun",)},
     "submarine": {"hp": 90, "armor": 10, "speed": 25, "radar": 20, "sonar": 40, "custo": 5, "armas": ("torpedo",)},
     "aircraft": {"hp": 70, "armor": 5, "speed": 60, "radar": 20, "sonar": 40, "custo": 4, "armas": ("missile",)},
+    "drone": {"hp": 45, "armor": 3, "speed": 80, "radar": 40, "sonar": 30, "custo": 4, "armas": ("missile",)},
+    "warship": {"hp": 180, "armor": 25, "speed": 20, "radar": 30, "sonar": 40, "custo": 6, "armas": ("gun", "torpedo")},
+    "missile_launcher": {"hp": 80, "armor": 15, "speed": 15, "radar": 20, "sonar": 20, "custo": 5, "armas": ("missile",)},
 }
 
 ARMAS = {
