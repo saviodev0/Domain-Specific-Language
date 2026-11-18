@@ -1,14 +1,24 @@
-import { Arena, TERRENOS } from "./arena.js";
+import { Arena, TERRENOS } from "./arena.js?v=unit-sprites-1";
 import { criarCompletar } from "./completar.js";
 import { Editor } from "./editor.js";
 
 const MAXIMO_DE_TURNOS_AUTOMATICOS = 50;
 const MAXIMO_NO_REGISTRO = 300;
-const NOMES_DOS_TIPOS = { tank: "tanque", submarine: "submarino", aircraft: "aeronave" };
+const NOMES_DOS_TIPOS = {
+  tank: "tanque",
+  submarine: "submarino",
+  aircraft: "aeronave",
+  drone: "drone",
+  warship: "navio de guerra",
+  missile_launcher: "lança-mísseis",
+};
 const ESPECIAIS = {
   tank: "se abriga nas ruínas",
   submarine: "dive/surface; submerso só leva torpedo",
   aircraft: "voa sobre ilhas; torpedo não atinge",
+  drone: "voa sobre ilhas e ruínas; torpedo não atinge",
+  warship: "armamento pesado; gun e torpedo",
+  missile_launcher: "fogo de longo alcance com míssil",
 };
 const NOMES_DE_EXEMPLO = { gun: "Canhao", torpedo: "Torpedo", missile: "Missil" };
 const PLACEHOLDERS = {
@@ -288,14 +298,14 @@ function calcularPrevisao() {
   if (alvo.tipo === "submarine" && alvo.profundidade > 0 && arma.tipo !== "torpedo") {
     bloqueios.push("Somente torpedos atingem submarinos submersos.");
   }
-  if (alvo.tipo === "aircraft" && arma.tipo === "torpedo") {
-    bloqueios.push("Torpedos não atingem aeronaves.");
+  if ((alvo.tipo === "aircraft" || alvo.tipo === "drone") && arma.tipo === "torpedo") {
+    bloqueios.push(alvo.tipo === "drone" ? "Torpedos não atingem drones." : "Torpedos não atingem aeronaves.");
   }
 
   let dano = Math.max(1, Math.floor((arma.dano - alvo.armadura) * 1));
   let cobertura = "Nenhuma";
   const terreno = terrenoDaCelula(alvo);
-  if (terreno === "#" && alvo.tipo !== "aircraft") {
+  if (terreno === "#" && alvo.tipo !== "aircraft" && alvo.tipo !== "drone") {
     dano = Math.max(1, Math.floor(dano * 0.5));
     cobertura = "Ruínas · dano 50%";
   }
@@ -305,7 +315,11 @@ function calcularPrevisao() {
 
   const chance = bloqueios.length === 0 && dano >= alvo.hp ? 100 : 0;
   const modificadores = [];
-  if (terreno === "#") modificadores.push(alvo.tipo === "aircraft" ? "Aeronave não se abriga em ruínas" : "Cobertura em ruínas");
+  if (terreno === "#") modificadores.push(
+    alvo.tipo === "aircraft" ? "Aeronave não se abriga em ruínas"
+      : alvo.tipo === "drone" ? "Drone não se abriga em ruínas"
+      : "Cobertura em ruínas"
+  );
   if (alvo.tipo === "submarine" && alvo.profundidade > 0) modificadores.push(`Submerso ${alvo.profundidade}m`);
   if (alvo.exposto) modificadores.push("Exposto · dano dobrado");
   if (atacante.tipo === "submarine" && atacante.profundidade > 0) modificadores.push("Ataque submerso revelará o submarino");

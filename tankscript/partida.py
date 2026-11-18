@@ -422,7 +422,7 @@ def _pode_ferir(atacantes: list, alvos: list) -> bool:
             if arma["ammo"] <= 0:
                 continue
             for alvo in alvos:
-                if alvo.kind == "aircraft" and arma["kind"] == "torpedo":
+                if alvo.kind in ("aircraft", "drone") and arma["kind"] == "torpedo":
                     continue
                 # canhão e míssil só alcançam o submarino na superfície; sem munição, ele pode ficar submerso
                 if alvo.kind == "submarine" and arma["kind"] != "torpedo" and alvo.depth > 0 \
@@ -466,6 +466,9 @@ NOMES_INIMIGOS = {
     "tank": ("Brutus", "Rochedo", "Bastiao"),
     "submarine": ("Kraken", "Leviata", "Abissal"),
     "aircraft": ("Harpia", "Corvo", "Vespa"),
+    "drone": ("Mosca", "FalcaoD", "Inseto"),
+    "warship": ("Dreadnought", "Acorazado", "Conqueror"),
+    "missile_launcher": ("Lancador", "Martelo", "Golem"),
 }
 NOMES_DE_ARMAS = {"gun": "Canhao", "torpedo": "Torpedo", "missile": "Missil"}
 COLUNA_DO_JOGADOR = 10

@@ -137,3 +137,21 @@ def test_radar_is_readable_in_conditions():
         interpreter.execute_statement(statement)
 
     assert (interpreter.units["Alpha"].x, interpreter.units["Alpha"].y) == (5, 5)
+
+
+def test_new_unit_classes_and_weapons_are_valid():
+    resultado = analisar("""
+drone Sentinel { missile A1 }
+warship Vanguard { gun C1 torpedo T1 }
+missile_launcher Bastion { missile M1 }
+team Blue { Sentinel Vanguard Bastion }
+""")
+
+    assert resultado.unidades["Sentinel"].tipo == "drone"
+    assert resultado.unidades["Vanguard"].armas == {"C1": "gun", "T1": "torpedo"}
+    assert resultado.unidades["Bastion"].tipo == "missile_launcher"
+
+
+def test_missile_launcher_rejects_other_weapons():
+    encontrados = erros("missile_launcher Bastion { gun C1 }")
+    assert any("missile_launcher não monta gun; use missile" in erro for erro in encontrados)

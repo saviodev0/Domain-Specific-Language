@@ -10,7 +10,7 @@ O projeto implementa as fases de um compilador/interpretador (lexer, parser, ár
 
 ## Funcionalidades
 
-- **Linguagem própria (`.tank`):** declaração de tanques, submarinos e aeronaves com atributos fixos por tipo, armas, equipes, condições (`if`) e repetições (`repeat`).
+- **Linguagem própria (`.tank`):** declaração de tanques, submarinos, aeronaves, drones, navios de guerra e lançadores de míssil, com atributos fixos por tipo, armas, equipes, condições (`if`) e repetições (`repeat`).
 - **Névoa de guerra e sonar:** cada unidade enxerga só 2 casas ao redor e só se atira no que a equipe vê. O `sonar` alcança 3 ou 4 casas e revela até submarinos submersos, mas recarrega por 2 turnos e denuncia a posição de quem o usa.
 - **Terrenos:**
   - `I` (ilha): bloqueia o movimento.

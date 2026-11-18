@@ -5,7 +5,7 @@ options { tokenVocab = TankScriptLexer; }
 programa    : (declaracao | instrucao)* EOF ;
 
 declaracao  : unidade | equipe | batalha ;
-unidade     : (TANK | SUBMARINE | AIRCRAFT) IDENTIFIER LBRACE (propriedade | arma)* RBRACE ;
+unidade     : (TANK | SUBMARINE | AIRCRAFT | DRONE | WARSHIP | NAVIO_GUERRA | MISSILE_LAUNCHER | LANCA_MISSIL) IDENTIFIER LBRACE (propriedade | arma)* RBRACE ;
 arma        : (GUN | TORPEDO | MISSILE) IDENTIFIER (LBRACE propriedade* RBRACE)? ;
 propriedade : IDENTIFIER numero ;
 equipe      : TEAM IDENTIFIER LBRACE IDENTIFIER* RBRACE ;

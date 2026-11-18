@@ -43,6 +43,9 @@ Os atributos são fixos por tipo; declarar uma unidade só escolhe o nome e as a
 | `tank` | 120 | 15 | 30 | 2 casas | 3 casas | `gun` |
 | `submarine` | 90 | 10 | 25 | 2 casas | 4 casas | `torpedo` |
 | `aircraft` | 70 | 5 | 60 | 2 casas | 4 casas | `missile` |
+| `drone` | 45 | 3 | 80 | 4 casas | 3 casas | `missile` |
+| `warship` / `navio_guerra` | 180 | 25 | 20 | 3 casas | 4 casas | `gun`, `torpedo` |
+| `missile_launcher` / `lanca_missil` | 80 | 15 | 15 | 2 casas | 2 casas | `missile` |
 
 | Arma | Dano | Alcance | Munição | Recarga |
 | :--- | :---: | :---: | :---: | :---: |
