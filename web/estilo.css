@@ -227,21 +227,30 @@ button.chip {
 
 body.modo-tela-cheia {
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
 }
 
 .modo-tela-cheia .topo {
-  display: none;
+  position: static;
+  flex: none;
+  gap: 6px 14px;
+  padding: 6px 12px;
+  z-index: 6;
 }
 
 .modo-tela-cheia .layout {
-  position: fixed;
-  inset: 0;
+  position: relative;
   z-index: 1;
+  flex: 1;
+  min-height: 0;
   grid-template-columns: minmax(300px, 30vw) minmax(0, 1fr);
-  gap: 12px;
-  height: 100vh;
-  padding: 12px;
+  gap: 8px;
+  height: auto;
+  padding: 8px 12px 12px;
   align-items: stretch;
+  overflow: hidden;
 }
 
 .modo-tela-cheia .editor-painel {
@@ -250,32 +259,24 @@ body.modo-tela-cheia {
   position: static;
   height: 100%;
   min-height: 0;
-  overflow: hidden;
-  gap: 10px;
-}
-
-.modo-tela-cheia .abas,
-.modo-tela-cheia .explicacao,
-.modo-tela-cheia #orcamento,
-.modo-tela-cheia .referencia,
-.modo-tela-cheia #erros,
-.modo-tela-cheia .inferior,
-.modo-tela-cheia .legenda {
-  display: none !important;
+  overflow-y: auto;
+  gap: 7px;
+  padding: 10px;
 }
 
 .modo-tela-cheia .editor {
   flex: 1;
-  min-height: 0;
+  min-height: 180px;
 }
 
 .modo-tela-cheia .editor .CodeMirror {
-  height: 100% !important;
+  height: clamp(180px, 36vh, 440px) !important;
 }
 
 .modo-tela-cheia .acoes {
   flex: none;
   flex-wrap: wrap;
+  gap: 6px;
 }
 
 .modo-tela-cheia #executar {
@@ -297,28 +298,94 @@ body.modo-tela-cheia {
 .modo-tela-cheia .arena-coluna {
   grid-column: 2;
   order: 0;
-  display: block;
+  display: grid;
+  grid-template-rows: minmax(0, 3fr) minmax(210px, 2fr);
+  gap: 8px;
   height: 100%;
   min-height: 0;
 }
 
 .modo-tela-cheia .arena-painel {
   height: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
 }
 
 .modo-tela-cheia .arena {
+  flex: 1;
   width: 100%;
   height: 100%;
+  min-height: 0;
   aspect-ratio: auto;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .modo-tela-cheia .arena canvas {
   width: 100%;
   height: 100%;
+}
+
+.modo-tela-cheia .legenda {
+  gap: 4px 10px;
+  margin-top: 5px;
+  font-size: 10px;
+}
+
+.modo-tela-cheia .inferior {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 8px;
+  min-height: 0;
+}
+
+.modo-tela-cheia .inferior > .painel {
+  min-height: 0;
+  overflow: auto;
+  padding: 9px;
+}
+
+.modo-tela-cheia .inferior .painel h2 {
+  margin-bottom: 6px;
+  font-size: 11px;
+}
+
+.modo-tela-cheia .unidades {
+  max-height: 34vh;
+  gap: 5px;
+}
+
+.modo-tela-cheia .cartao {
+  padding: 6px 8px;
+}
+
+.modo-tela-cheia .cartao .nome,
+.modo-tela-cheia .numeros,
+.modo-tela-cheia .armas {
+  font-size: 10px;
+}
+
+.modo-tela-cheia .vida {
+  margin: 4px 0;
+}
+
+.modo-tela-cheia .etiquetas {
+  margin-top: 3px;
+}
+
+.modo-tela-cheia .replay-titulo,
+.modo-tela-cheia .registro-titulo {
+  margin-top: 8px !important;
+  padding-top: 6px;
+}
+
+.modo-tela-cheia .registro {
+  max-height: 14vh;
+}
+
+.modo-tela-cheia .replay-eventos {
+  max-height: 42px;
 }
 
 .abas {
@@ -1324,8 +1391,66 @@ li.CodeMirror-hint-active {
   }
 
   .modo-tela-cheia .layout {
-    grid-template-columns: minmax(240px, 38vw) minmax(0, 1fr);
+    grid-template-columns: minmax(260px, 34vw) minmax(0, 1fr);
     gap: 8px;
     padding: 8px;
+  }
+
+  .modo-tela-cheia .inferior {
+    grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
+  }
+}
+
+@media (max-height: 650px) {
+  .modo-tela-cheia .arena-coluna {
+    grid-template-rows: minmax(0, 1fr) minmax(250px, 1fr);
+  }
+
+  .modo-tela-cheia .editor .CodeMirror {
+    height: clamp(120px, 24vh, 240px) !important;
+  }
+
+  .modo-tela-cheia .acoes {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    padding: 6px 0;
+    background: var(--painel);
+  }
+
+  .modo-tela-cheia .previsao {
+    min-height: 68px;
+    padding: 7px;
+  }
+
+  .modo-tela-cheia .replay {
+    padding: 5px;
+  }
+
+  .modo-tela-cheia .replay-controles {
+    grid-template-columns: repeat(5, minmax(20px, 26px)) minmax(25px, 1fr);
+    gap: 3px;
+  }
+
+  .modo-tela-cheia .replay-controles button {
+    width: 100%;
+    min-width: 0;
+    height: 24px;
+    padding: 0;
+    font-size: 10px;
+  }
+
+  .modo-tela-cheia .replay-controles span {
+    grid-column: 1 / -1;
+    text-align: right;
+  }
+
+  .modo-tela-cheia .replay-eventos {
+    max-height: 22px;
+    margin-top: 5px;
+  }
+
+  .modo-tela-cheia .registro {
+    max-height: 8vh;
   }
 }
