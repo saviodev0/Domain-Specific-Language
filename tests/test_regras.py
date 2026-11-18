@@ -8,7 +8,7 @@ from http.server import ThreadingHTTPServer
 import pytest
 
 from src.servidor import Manipulador
-from tankscript.partida import LIMITE_DE_TURNOS, ErroDaPartida, Partida
+from tankscript.partida import LIMITE_DE_TURNOS, ErroDaPartida, Partida, criar_arena
 from tankscript.semantico import ErroSemantico
 
 
@@ -31,6 +31,14 @@ def erros_do_turno(jogo, codigo):
 
 
 ALVO_LONGE = "tank Alvo { gun G }"
+
+
+def test_same_seed_creates_the_same_enemy_fleet():
+    exercito = "tank Rex { gun G }"
+    primeira = criar_arena(exercito, semente=12345)
+    segunda = criar_arena(exercito, semente=12345)
+
+    assert primeira.codigo_do_inimigo == segunda.codigo_do_inimigo
 
 
 # ---------- erros de programa: barrados antes de executar ----------

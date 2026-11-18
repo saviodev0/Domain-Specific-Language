@@ -1,5 +1,6 @@
 import argparse
 import json
+import random
 import sys
 import threading
 import uuid
@@ -24,8 +25,10 @@ _partidas: "OrderedDict[str, Partida]" = OrderedDict()
 _trava = threading.Lock()
 
 
-def criar_partida(codigo: str):
-    partida = criar_arena(codigo)
+def criar_partida(codigo: str, semente=None):
+    if semente is None:
+        semente = random.SystemRandom().randint(1, 2_147_483_647)
+    partida = criar_arena(codigo, semente=int(semente))
     identificador = uuid.uuid4().hex
     _partidas[identificador] = partida
     while len(_partidas) > MAXIMO_DE_PARTIDAS:
@@ -36,6 +39,7 @@ def criar_partida(codigo: str):
         "estado_inicial": partida.estado_inicial,
         "eventos": partida.eventos_do_cenario,
         "codigo_do_inimigo": partida.codigo_do_inimigo,
+        "semente": semente,
         **partida.resumo(),
     }
 
@@ -62,12 +66,16 @@ class Manipulador(SimpleHTTPRequestHandler):
     def do_POST(self):
         partes = self.path.strip("/").split("/")
         try:
-            codigo = self._ler_codigo()
+            corpo = self._ler_corpo()
+            codigo = corpo["codigo"]
             with _trava:
                 if partes == ["api", "exercito"]:
                     return self._responder(200, verificar_exercito(codigo))
                 if partes == ["api", "partidas"]:
-                    return self._responder(201, criar_partida(codigo))
+                    semente = corpo.get("semente")
+                    if semente is not None:
+                        semente = int(semente)
+                    return self._responder(201, criar_partida(codigo, semente))
                 if len(partes) == 4 and partes[:2] == ["api", "partidas"] and partes[3] == "turnos":
                     return self._responder(200, jogar_turno(partes[2], codigo))
             return self._responder(404, {"erros": [{"mensagem": "Rota não encontrada"}]})
@@ -79,7 +87,7 @@ class Manipulador(SimpleHTTPRequestHandler):
             self.log_error("Erro interno: %r", erro)
             return self._responder(500, {"erros": [{"mensagem": f"Erro interno do servidor: {erro}"}]})
 
-    def _ler_codigo(self) -> str:
+    def _ler_corpo(self) -> dict:
         tamanho = int(self.headers.get("Content-Length", 0))
         if not 0 <= tamanho <= TAMANHO_MAXIMO:
             raise ValueError("Tamanho do programa inválido ou grande demais")
@@ -87,7 +95,7 @@ class Manipulador(SimpleHTTPRequestHandler):
         codigo = corpo.get("codigo") if isinstance(corpo, dict) else None
         if not isinstance(codigo, str):
             raise ValueError("Envie o programa no campo 'codigo'")
-        return codigo
+        return corpo
 
     def _responder(self, status: int, dados) -> None:
         corpo = json.dumps(dados, ensure_ascii=False).encode("utf-8")

@@ -22,9 +22,13 @@
       <span class="chip" id="fase">Planejamento</span>
       <span class="chip" id="turno">Turno —</span>
       <span class="chip lado" id="lados" hidden></span>
+      <button type="button" class="chip semente" id="semente" hidden title="Semente da partida"></button>
+      <button type="button" class="chip" id="reiniciar-semente" hidden>Reiniciar com semente</button>
     </div>
     <div class="controles">
       <button type="button" id="abrir-manual" class="secundario">Manual</button>
+      <button type="button" id="exportar-registro" class="secundario" hidden>Exportar registro</button>
+      <button type="button" id="carregar-replay" class="secundario" hidden>Replay salvo</button>
       <div class="velocidade" role="group" aria-label="Velocidade das animações">
         <button type="button" data-velocidade="0.5">0,5×</button>
         <button type="button" data-velocidade="1" class="ativo">1×</button>
@@ -86,6 +90,18 @@
           <h2>Previsão de combate</h2>
           <div id="previsao" class="previsao">
             <p class="vazio">Selecione uma arma e um alvo para comparar dano e chance de destruição.</p>
+          </div>
+          <h2 class="replay-titulo">Replay</h2>
+          <div id="replay" class="replay">
+            <div class="replay-controles">
+              <button type="button" id="replay-inicio" title="Primeiro quadro">|&lt;</button>
+              <button type="button" id="replay-anterior" title="Quadro anterior">&lt;</button>
+              <input id="replay-quadro" type="range" min="0" max="0" value="0" aria-label="Linha do tempo do replay">
+              <button type="button" id="replay-proximo" title="Próximo quadro">&gt;</button>
+              <button type="button" id="replay-fim" title="Último quadro">&gt;|</button>
+              <span id="replay-posicao">Sem replay</span>
+            </div>
+            <ol id="replay-eventos" class="replay-eventos"></ol>
           </div>
           <h2 class="registro-titulo">Registro</h2>
           <ol id="registro" class="registro"></ol>
@@ -175,6 +191,7 @@ aircraft Hawk { missile Ferrao }</code></pre>
       <p id="fim-texto"></p>
       <div class="fim-acoes">
         <button type="button" id="fim-ver" class="secundario">Ver o mapa</button>
+        <button type="button" id="fim-reiniciar-semente" class="secundario">Reiniciar com semente</button>
         <button type="button" id="fim-nova" class="primario">Nova batalha</button>
       </div>
     </div>
