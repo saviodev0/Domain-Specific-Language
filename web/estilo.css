@@ -225,6 +225,102 @@ button.chip {
   top: 72px;
 }
 
+body.modo-tela-cheia {
+  overflow: hidden;
+}
+
+.modo-tela-cheia .topo {
+  display: none;
+}
+
+.modo-tela-cheia .layout {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  grid-template-columns: minmax(300px, 30vw) minmax(0, 1fr);
+  gap: 12px;
+  height: 100vh;
+  padding: 12px;
+  align-items: stretch;
+}
+
+.modo-tela-cheia .editor-painel {
+  grid-column: 1;
+  order: 0;
+  position: static;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  gap: 10px;
+}
+
+.modo-tela-cheia .abas,
+.modo-tela-cheia .explicacao,
+.modo-tela-cheia #orcamento,
+.modo-tela-cheia .referencia,
+.modo-tela-cheia #erros,
+.modo-tela-cheia .inferior,
+.modo-tela-cheia .legenda {
+  display: none !important;
+}
+
+.modo-tela-cheia .editor {
+  flex: 1;
+  min-height: 0;
+}
+
+.modo-tela-cheia .editor .CodeMirror {
+  height: 100% !important;
+}
+
+.modo-tela-cheia .acoes {
+  flex: none;
+  flex-wrap: wrap;
+}
+
+.modo-tela-cheia #executar {
+  flex: 1 1 100%;
+}
+
+.modo-tela-cheia #automatico,
+.modo-tela-cheia #sair-tela-cheia {
+  flex: 1;
+  justify-content: center;
+}
+
+.modo-aviso {
+  flex-basis: 100%;
+  color: var(--alerta);
+  font-size: 11px;
+}
+
+.modo-tela-cheia .arena-coluna {
+  grid-column: 2;
+  order: 0;
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+.modo-tela-cheia .arena-painel {
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.modo-tela-cheia .arena {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  border-radius: 10px;
+}
+
+.modo-tela-cheia .arena canvas {
+  width: 100%;
+  height: 100%;
+}
+
 .abas {
   display: flex;
   gap: 4px;
@@ -1225,5 +1321,11 @@ li.CodeMirror-hint-active {
   .legenda .dica {
     margin-left: 0;
     width: 100%;
+  }
+
+  .modo-tela-cheia .layout {
+    grid-template-columns: minmax(240px, 38vw) minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px;
   }
 }
