@@ -24,6 +24,7 @@ const jogo = {
   estado: null,
   ocupado: false,
   automatico: false,
+  reiniciarSemente: null,
 };
 
 const previsao = {
@@ -52,11 +53,11 @@ function escapar(texto) {
   return String(texto).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 }
 
-async function chamar(rota, codigo) {
+async function chamar(rota, codigo, semente = null) {
   const resposta = await fetch(rota, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ codigo }),
+    body: JSON.stringify(semente === null ? { codigo } : { codigo, semente }),
   });
   const dados = await resposta.json();
   return { ok: resposta.ok, dados };
@@ -65,6 +66,14 @@ async function chamar(rota, codigo) {
 let salvarDepois;
 let verificarDepois;
 let catalogo;
+const replay = {
+  frames: [],
+  indice: 0,
+  semente: null,
+  cenario: "",
+  turnos: [],
+  mapa: null,
+};
 const sugerir = criarCompletar(() => ({ aba: editor.atual, catalogo, unidades: jogo.estado?.unidades || [] }));
 const editor = new Editor($("#editor"), executar, (aba, texto) => {
   clearTimeout(salvarDepois);
@@ -381,6 +390,133 @@ function atualizarTrechos() {
 
 /* ---------- execução ---------- */
 
+function salvarReplay() {
+  if (!replay.frames.length) return;
+  try {
+    localStorage.setItem("tankio:v2:ultimo-replay", JSON.stringify(replay));
+  } catch {
+    /* armazenamento indisponível: o replay continua apenas nesta sessão */
+  }
+  $("#exportar-registro").hidden = false;
+}
+
+function iniciarReplay(dados) {
+  replay.frames = [{
+    rotulo: "Cenário",
+    turno: 0,
+    estado: JSON.parse(JSON.stringify(dados.estado_inicial)),
+    evento: null,
+  }];
+  replay.indice = 0;
+  replay.semente = dados.semente;
+  replay.cenario = editor.texto("cenario");
+  replay.turnos = [];
+  replay.mapa = dados.mapa;
+  $("#semente").hidden = false;
+  $("#semente").textContent = `Semente ${dados.semente}`;
+  $("#semente").dataset.semente = dados.semente;
+  $("#reiniciar-semente").hidden = false;
+  atualizarReplay();
+  salvarReplay();
+}
+
+function adicionarFrame(evento) {
+  const turno = evento.turno || replay.frames.at(-1)?.turno || 0;
+  replay.frames.push({
+    rotulo: turno ? `T${turno}` : (evento.origem === "cenario" ? "Cenário" : "Ação"),
+    turno,
+    estado: JSON.parse(JSON.stringify(evento.estado)),
+    evento: JSON.parse(JSON.stringify(evento)),
+  });
+  replay.indice = replay.frames.length - 1;
+  atualizarReplay();
+  salvarReplay();
+}
+
+function atualizarReplay() {
+  const slider = $("#replay-quadro");
+  const maximo = Math.max(0, replay.frames.length - 1);
+  slider.max = String(maximo);
+  slider.value = String(replay.indice);
+  $("#replay-posicao").textContent = replay.frames.length
+    ? `${replay.indice + 1}/${replay.frames.length}`
+    : "Sem replay";
+  $("#replay-eventos").innerHTML = replay.frames.map((frame, indice) => `
+    <li><button type="button" data-replay-indice="${indice}" class="${indice === replay.indice ? "ativo" : ""}" title="${escapar(frame.rotulo)}">${escapar(frame.rotulo)}</button></li>
+  `).join("");
+}
+
+function navegarReplay(indice) {
+  if (!replay.frames.length) return;
+  replay.indice = Math.max(0, Math.min(replay.frames.length - 1, Number(indice)));
+  const frame = replay.frames[replay.indice];
+  cena.aplicarEstado(frame.estado, { instantaneo: true });
+  atualizarUnidades(frame.estado);
+  jogo.estado = frame.estado;
+  $("#turno").textContent = frame.turno ? `Turno ${frame.turno}` : "Turno 0";
+  atualizarReplay();
+}
+
+function registrarCodigoDoTurno(codigo, numero) {
+  replay.turnos = replay.turnos.filter((turno) => turno.numero !== numero);
+  replay.turnos.push({ numero, codigo });
+  salvarReplay();
+}
+
+function carregarReplaySalvo() {
+  let salvo;
+  try {
+    salvo = JSON.parse(localStorage.getItem("tankio:v2:ultimo-replay"));
+  } catch {
+    return;
+  }
+  if (!salvo?.frames?.length) return;
+  Object.assign(replay, salvo);
+  replay.indice = replay.frames.length - 1;
+  if (replay.cenario) editor.definir("cenario", replay.cenario);
+  if (replay.mapa) cena.montarMapa(replay.mapa);
+  $("#semente").hidden = replay.semente === null;
+  if (replay.semente !== null) {
+    $("#semente").textContent = `Semente ${replay.semente}`;
+    $("#semente").dataset.semente = replay.semente;
+  }
+  $("#reiniciar-semente").hidden = replay.semente === null;
+  $("#exportar-registro").hidden = false;
+  navegarReplay(replay.indice);
+  registrar("Replay salvo restaurado.", "sistema");
+}
+
+function exportarRegistro() {
+  if (!replay.frames.length) return;
+  const linhas = [
+    "TankIO - Registro da partida",
+    `Semente: ${replay.semente ?? "-"}`,
+    "",
+    "[cenario.tank]",
+    replay.cenario,
+    "",
+  ];
+  for (const turno of replay.turnos) {
+    linhas.push(`[turno ${turno.numero}]`, turno.codigo, "");
+  }
+  linhas.push("[eventos]");
+  for (const frame of replay.frames) {
+    if (!frame.evento) continue;
+    const evento = frame.evento;
+    linhas.push(`Turno ${frame.turno} | ${evento.origem || "sistema"} | ${evento.tipo}${evento.linha ? ` | linha ${evento.linha}` : ""}`);
+    for (const mensagem of evento.mensagens || []) linhas.push(`  ${mensagem}`);
+  }
+  const blob = new Blob([linhas.join("\n")], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `tankio-replay-${replay.semente ?? "partida"}.txt`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 async function reproduzir(eventos) {
   const rapido = eventos.length > 120;
   if (rapido) registrar(`${eventos.length} instruções: animação acelerada`, "sistema");
@@ -393,6 +529,7 @@ async function reproduzir(eventos) {
     registrarEvento(evento);
     await cena.animarEvento(evento, anterior);
     cena.aplicarEstado(evento.estado);
+    adicionarFrame(evento);
     atualizarUnidades(evento.estado);
     jogo.estado = evento.estado;
     anterior = evento.estado;
@@ -435,12 +572,13 @@ function prepararTurno(dados) {
   if (atualizado !== rascunho) editor.definir("turno", atualizado);
 }
 
-async function iniciarBatalha() {
-  const { ok, dados } = await chamar("/api/partidas", editor.texto("cenario"));
+async function iniciarBatalha(semente = null) {
+  const { ok, dados } = await chamar("/api/partidas", editor.texto("cenario"), semente);
   if (!ok) return mostrarErros(dados.erros);
 
   jogo.partida = dados;
   jogo.estado = dados.estado_inicial;
+  iniciarReplay(dados);
   $("#registro").innerHTML = "";
   cena.montarMapa(dados.mapa);
   cena.aplicarEstado(dados.estado_inicial, { instantaneo: true });
@@ -474,6 +612,7 @@ async function jogarTurno() {
   }
   definirFase("executando", "Executando turno");
   $("#turno").textContent = `Turno ${dados.turno}`;
+  registrarCodigoDoTurno(editor.texto("turno"), dados.turno);
   await reproduzir(dados.eventos);
   jogo.partida = { ...jogo.partida, ...dados };
   if (dados.vencedor || dados.empate) {
@@ -492,7 +631,8 @@ async function executar() {
   try {
     if (editor.atual === "cenario") {
       jogo.partida = null;
-      await iniciarBatalha();
+      await iniciarBatalha(jogo.reiniciarSemente);
+      jogo.reiniciarSemente = null;
     } else if (jogo.fase !== "fim") {
       do {
         await jogarTurno();
@@ -553,7 +693,38 @@ for (const botao of document.querySelectorAll("[data-velocidade]")) {
   });
 }
 
+function reiniciarComSemente() {
+  if (replay.semente === null) return;
+  jogo.reiniciarSemente = replay.semente;
+  $("#fim").hidden = true;
+  definirFase("cenario", "Planejamento");
+  mostrarAba("cenario");
+  executar();
+}
+
+$("#reiniciar-semente").addEventListener("click", reiniciarComSemente);
+$("#fim-reiniciar-semente").addEventListener("click", reiniciarComSemente);
+$("#exportar-registro").addEventListener("click", exportarRegistro);
+$("#carregar-replay").addEventListener("click", carregarReplaySalvo);
+$("#semente").addEventListener("click", async () => {
+  const semente = $("#semente").dataset.semente;
+  if (!semente) return;
+  try {
+    await navigator.clipboard.writeText(semente);
+  } catch {
+    /* copiar não é obrigatório */
+  }
+});
+
+$("#replay-inicio").addEventListener("click", () => navegarReplay(0));
+$("#replay-anterior").addEventListener("click", () => navegarReplay(replay.indice - 1));
+$("#replay-proximo").addEventListener("click", () => navegarReplay(replay.indice + 1));
+$("#replay-fim").addEventListener("click", () => navegarReplay(replay.frames.length - 1));
+$("#replay-quadro").addEventListener("input", (evento) => navegarReplay(evento.target.value));
+
 document.addEventListener("click", (evento) => {
+  const replayIndice = evento.target.closest("[data-replay-indice]");
+  if (replayIndice) navegarReplay(replayIndice.dataset.replayIndice);
   const preverArma = evento.target.closest("[data-prever-arma]");
   if (preverArma) {
     previsao.atacante = preverArma.dataset.preverArma;
@@ -600,3 +771,4 @@ editor.definir("turno", ler("tankio:v2:turno") || "");
 mostrarAba("cenario");
 verificarExercito();
 if (!ler("tankio:v2:manual-visto")) abrirManual();
+if (ler("tankio:v2:ultimo-replay")) $("#carregar-replay").hidden = false;

@@ -217,8 +217,9 @@ class Partida:
     """Uma partida jogada por turnos: o cenário declara as unidades e cada turno é um programa
     TankScript com as ordens do jogador, seguido da jogada da IA."""
 
-    def __init__(self, codigo: str):
+    def __init__(self, codigo: str, semente: Optional[int] = None):
         self.renderer = GridRenderer()
+        self.semente = semente
         self.tabela = _verificar(codigo, AnalisadorDaPartida(self.renderer))
         ast = _ast(codigo)
         self.interpretador = _InterpretadorComEventos(ast, self)
@@ -226,7 +227,7 @@ class Partida:
             self.interpretador.execute_declaration(declaracao)
 
         self.jogador, self.inimigo = self._lados()
-        self.ia = EnemyAI(team_name=self.inimigo) if self.inimigo else None
+        self.ia = EnemyAI(team_name=self.inimigo, seed=semente) if self.inimigo else None
         self.turno = 0
         self.estado_inicial = self.estado()
         self.eventos_do_cenario = self._executar(ast["statements"], "cenario")
@@ -520,6 +521,8 @@ def criar_arena(codigo: str, semente: Optional[int] = None) -> Partida:
     """Modo arena: o jogador declara só o exército; o jogo gera a frota inimiga, as equipes e a batalha."""
     exercito = _verificar(codigo, AnalisadorDoExercito(GridRenderer()))
     jogador = [unidade.IDENTIFIER().getText() for unidade in exercito.declaradas]
+    if semente is None:
+        semente = random.SystemRandom().randint(1, 2_147_483_647)
     inimigo_codigo = codigo_do_inimigo(set(jogador), random.Random(semente))
     inimigo = [linha.split()[1] for linha in inimigo_codigo.splitlines()]
 
@@ -530,7 +533,7 @@ def criar_arena(codigo: str, semente: Optional[int] = None) -> Partida:
         f"team Jogador {{ {' '.join(jogador)} }}",
         f"team Inimigo {{ {' '.join(inimigo)} }}",
         "battle Arena { Jogador vs Inimigo }",
-    ]))
+    ]), semente=semente)
     partida.codigo_do_inimigo = inimigo_codigo
     _posicionar(partida, jogador, COLUNA_DO_JOGADOR)
     _posicionar(partida, inimigo, COLUNA_DO_INIMIGO)

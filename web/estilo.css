@@ -120,6 +120,16 @@ button:disabled {
   letter-spacing: 0.04em;
 }
 
+button.chip {
+  cursor: pointer;
+}
+
+.semente {
+  color: var(--alerta);
+  border-style: dashed;
+  font-family: var(--mono);
+}
+
 #fase[data-fase="executando"] {
   color: var(--alerta);
   border-color: rgba(180, 83, 9, 0.35);
@@ -895,6 +905,72 @@ li.CodeMirror-hint-active {
   margin-top: 16px !important;
   padding-top: 12px;
   border-top: 1px solid var(--borda);
+}
+
+.replay-titulo {
+  margin-top: 16px !important;
+  padding-top: 12px;
+  border-top: 1px solid var(--borda);
+}
+
+.replay {
+  padding: 8px;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  background: var(--painel-2);
+}
+
+.replay-controles {
+  display: grid;
+  grid-template-columns: repeat(5, 32px) minmax(100px, 1fr) auto;
+  gap: 5px;
+  align-items: center;
+}
+
+.replay-controles button {
+  height: 28px;
+  border: 1px solid var(--borda);
+  border-radius: 5px;
+  background: var(--painel);
+  font-family: var(--mono);
+}
+
+.replay-controles input {
+  width: 100%;
+}
+
+.replay-controles span {
+  color: var(--suave);
+  font: 10.5px var(--mono);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.replay-eventos {
+  display: flex;
+  gap: 4px;
+  margin: 8px 0 0;
+  padding: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  list-style: none;
+}
+
+.replay-eventos button {
+  min-width: 58px;
+  height: 26px;
+  padding: 2px 6px;
+  border: 1px solid var(--borda);
+  border-radius: 99px;
+  background: var(--painel);
+  color: var(--suave);
+  font: 10.5px var(--mono);
+}
+
+.replay-eventos button.ativo {
+  border-color: var(--destaque);
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--destaque);
 }
 
 .previsao {
